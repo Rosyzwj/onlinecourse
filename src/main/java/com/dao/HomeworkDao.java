@@ -18,4 +18,7 @@ public interface HomeworkDao extends BaseMapper<HomeworkEntity> {
 
    List<HomeworkView> selectListView(Pagination page,@Param("params")Map<String,Object> params);
 
+   // 更新作业（含 deadline，支持置 null）
+   void updateHomeworkWithDeadline(@Param("hw") HomeworkEntity homework);
+
 }

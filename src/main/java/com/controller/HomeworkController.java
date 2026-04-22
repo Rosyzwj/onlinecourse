@@ -169,15 +169,13 @@ public class HomeworkController {
     * 后端修改
     */
     @RequestMapping("/update")
-    public R update(@RequestBody HomeworkEntity homework, HttpServletRequest request) throws NoSuchFieldException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public R update(@RequestBody HomeworkEntity homework, HttpServletRequest request) {
         logger.debug("update方法:,,Controller:{},,homework:{}",this.getClass().getName(),homework.toString());
-        HomeworkEntity oldHomeworkEntity = homeworkService.selectById(homework.getId());//查询原先数据
-
-        String role = String.valueOf(request.getSession().getAttribute("role"));
-
-
-            homeworkService.updateById(homework);//根据id更新
-            return R.ok();
+        if (homeworkService.selectById(homework.getId()) == null) {
+            return R.error(511, "数据不存在");
+        }
+        homeworkService.updateHomeworkWithDeadline(homework);
+        return R.ok();
     }
 
 

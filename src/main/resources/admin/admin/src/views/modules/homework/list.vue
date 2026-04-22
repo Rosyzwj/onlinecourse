@@ -62,11 +62,22 @@
                         {{scope.row.zujuanValue}}
                     </template>
                 </el-table-column>
-                <el-table-column :resizable='true' :sortable='true'  
+                <el-table-column :resizable='true' :sortable='true'
                     prop="homeworkTypes"
                     label="课后习题状态">
                     <template slot-scope="scope">
                         {{scope.row.homeworkValue}}
+                    </template>
+                </el-table-column>
+                <el-table-column :resizable='true' :sortable='true'
+                    prop="deadline"
+                    label="截止时间"
+                    width="160">
+                    <template slot-scope="scope">
+                        <span v-if="scope.row.deadline" :style="isExpired(scope.row.deadline) ? {color:'#e74c3c',fontWeight:'bold'} : {}">
+                            {{ formatDateTime(scope.row.deadline) }}
+                        </span>
+                        <span v-else style="color:#aaa">未设置</span>
                     </template>
                 </el-table-column>
                 <el-table-column width="300" label="操作">
@@ -191,6 +202,11 @@
             // 补零函数
             padZero(num) {
                 return num < 10 ? '0' + num : num;
+            },
+            // 判断截止时间是否已过期
+            isExpired(dateStr) {
+                if (!dateStr) return false;
+                return new Date(dateStr) < new Date();
             },
 
             contentStyleChange() {

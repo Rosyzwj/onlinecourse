@@ -248,6 +248,12 @@ const menu = {
                 menuJump: "列表",
                 tableName: "course",
               },
+              {
+                appFrontIcon: "cuIcon-cardboard",
+                buttons: ["新增", "查看", "修改", "删除"],
+                menu: "课后习题",
+                tableName: "homework",
+              },
             ],
             menu: "课程信息管理",
           },
@@ -312,6 +318,18 @@ const menu = {
               },
             ],
             menu: "考试管理",
+          },
+          {
+            child: [
+              {
+                appFrontIcon: "cuIcon-map",
+                buttons: ["维护"],
+                menu: "知识地图维护",
+                menuJump: "知识地图维护",
+                tableName: "knowledgemap-manage",
+              },
+            ],
+            menu: "知识地图维护",
           },
         ],
         frontMenu: [

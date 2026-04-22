@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.HomeworkAlertDao">
+
+    <!-- 查询教师的提醒列表，关联学生姓名和课程名 -->
+    <select id="selectAlertsByTeacher" resultType="com.entity.HomeworkAlertEntity">
+        SELECT
+            a.id,
+            a.student_id      AS studentId,
+            a.teacher_id      AS teacherId,
+            a.course_id       AS courseId,
+            a.alert_message   AS alertMessage,
+            a.is_read         AS isRead,
+            a.create_time     AS createTime,
+            s.name            AS studentName,
+            c.coursename      AS courseName
+        FROM homework_alert a
+        LEFT JOIN student s ON a.student_id = s.id
+        LEFT JOIN course  c ON a.course_id  = c.id
+        WHERE a.teacher_id = #{teacherId}
+        ORDER BY a.is_read ASC, a.create_time DESC
+    </select>
+
+    <!-- 统计教师未读提醒数量 -->
+    <select id="countUnread" resultType="int">
+        SELECT COUNT(*)
+        FROM homework_alert
+        WHERE teacher_id = #{teacherId}
+          AND is_read = 0
+    </select>
+
+    <!-- 查询某学生在某课程下的逾期次数 -->
+    <select id="countOverdue" resultType="int">
+        SELECT COUNT(*)
+        FROM homeworkrecord hr
+        JOIN homework h ON hr.homework_id = h.id
+        WHERE hr.yonghu_id  = #{studentId}
+          AND h.course_id   = #{courseId}
+          AND hr.is_overdue = 1
+    </select>
+
+    <!-- 查询该学生在该课程是否已有未读提醒（防重复） -->
+    <select id="countUnreadAlert" resultType="int">
+        SELECT COUNT(*)
+        FROM homework_alert
+        WHERE student_id = #{studentId}
+          AND course_id  = #{courseId}
+          AND is_read    = 0
+    </select>
+
+</mapper>

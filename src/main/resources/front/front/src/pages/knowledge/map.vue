@@ -76,13 +76,21 @@ export default {
     },
     loadKnowledgeMap() {
       this.$http.get('knowledgemap/getKnowledgeMap').then(res => {
-        if (res.data.code === 0) {
-          const data = res.data.data;
-          const categories = data.categories;
-          this.updateMap(data.nodes, data.links, categories);
+        if (res.data && res.data.code === 0) {
+          const data = res.data.data || {}; // 增加兜底
+
+          // 确保 nodes 和 links 至少是个空数组，防止后续报错
+          const nodes = data.nodes || [];
+          const links = data.links || [];
+
+          // 即使后端没传 categories，前端也能给一个空数组或者 undefined，交给 updateMap 处理
+          const categories = data.categories || [];
+
+          this.updateMap(nodes, links, categories);
         }
       });
     },
+
     updateMap(nodes, links, categories) {
       if (!this.knowledgeMap) {
         this.$nextTick(() => {
@@ -92,7 +100,12 @@ export default {
         return;
       }
 
-      const resolvedCategories = (categories && categories.length > 0) ? categories : [{name: '知识点'}];
+      // 🌟 终极防御修复：安全地判断 categories 是否存在且有长度
+      // 避免 undefined.length 导致的致命报错
+      let resolvedCategories = [{name: '知识点'}]; // 默认值
+      if (Array.isArray(categories) && categories.length > 0) {
+        resolvedCategories = categories;
+      }
 
       const option = {
         title: {
@@ -128,29 +141,34 @@ export default {
           label: {
             show: true,
             position: 'right',
-            fontSize: 11,        // 1. 把字体稍微调小一点，防止文字互相遮挡
+            fontSize: 11,
             formatter: '{b}'
           },
           force: {
-            repulsion: 400,      // 斥力保持适中
-            gravity: 0.1,        // 向心力适中，让图表呈规则的圆形散开
-            edgeLength: [100, 300], // ★ 核心修改：把连线的长度跨度拉得很大！这样核心点和边缘点就会错开，大大减少缠绕
+            repulsion: 400,
+            gravity: 0.1,
+            edgeLength: [100, 300],
             layoutAnimation: true,
             friction: 0.5
           },
+
+          // 加上防止崩溃的起点 4 尺寸
+          edgeSymbol: ['none', 'arrow'],
+          edgeSymbolSize: [4, 8],
+
           lineStyle: {
             color: 'source',
-            curveness: 0,        // ★ 核心修改：改为 0，变成绝对的笔直连线
-            width: 1.5,
-            opacity: 0.6
+            curveness: 0,
+            opacity: 0.7,
+            width: 1.5
           },
-          // ★ 新增配置：直接在线上显示那些复杂的“关系类型”（包含、底层实现等）
+
           edgeLabel: {
             show: true,
             fontSize: 10,
             color: '#999',
             formatter: function(params) {
-              return params.data.value; // 显示连线传过来的 relation_type
+              return params.data.value || '';
             }
           },
           itemStyle: {

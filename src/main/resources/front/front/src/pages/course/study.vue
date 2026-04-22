@@ -330,22 +330,22 @@
                   </div>
                   
                   <!-- 简答题 -->
-                  <div v-if="item.examquestionTypes === 4" class="question-options">
-                    <el-input 
-                      type="textarea" 
-                      :rows="4" 
-                      v-model="answersMap[item.examquestionId]" 
-                      @change="selectQuestion(item.examquestionId, $event)"
-                      placeholder="请输入答案"
-                      :disabled="homeworkSubmitted"
+                  <div v-if="item.examquestionTypes === 4 || item.examquestionTypes === 5" class="question-options">
+                    <el-input
+                        type="textarea"
+                        :rows="4"
+                        v-model="answersMap[item.examquestionId]"
+                        @change="selectQuestion(item.examquestionId, $event)"
+                        placeholder="请输入答案（如果是填空题，多个空请用逗号隔开）"
+                        :disabled="homeworkSubmitted"
                     ></el-input>
-                    
-                    <!-- 显示参考答案（简答题） -->
+
                     <div v-if="homeworkSubmitted" class="correct-answer-explanation">
                       <p><strong>参考答案：</strong></p>
                       <p>{{ homeworkResult.correctAnswers[item.examquestionId] || '暂无参考答案' }}</p>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -606,6 +606,8 @@ export default {
       this.watchedCount = this.videoList.filter(v => v.isStudy === 1).length;
       this.setFirstUnfinishedVideo();
       this.loading = false;
+      // 初始化所有视频的作业提交状态
+      this.initHomeworkSubmittedStatus();
     },
     
     // 初始化视频进度
@@ -615,6 +617,37 @@ export default {
         video.watched = false;
         video.progress = 0;
         video.currentTime = 0;
+      });
+    },
+
+    // 页面加载时批量查询每个视频的作业提交状态
+    initHomeworkSubmittedStatus() {
+      if (!this.userId || !this.videoList || this.videoList.length === 0) return;
+      this.videoList.forEach(video => {
+        this.$http.get(`homework/findByVideoId?videoId=${video.id}&courseId=${this.courseId}`)
+          .then(res => {
+            if (res.data && res.data.code === 0 && res.data.data) {
+              const homeworkId = res.data.data.id;
+              return this.$http.get(`homeworkrecord/page`, {
+                params: { yonghuId: this.userId, homeworkId }
+              }).then(recRes => {
+                if (recRes.data && recRes.data.code === 0 &&
+                    recRes.data.data && recRes.data.data.list &&
+                    recRes.data.data.list.length > 0) {
+                  const records = recRes.data.data.list;
+                  records.sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
+                  const latest = records[0];
+                  this.$set(this.homeworkSubmittedMap, video.id, true);
+                  this.$set(this.homeworkResults, video.id, {
+                    score: latest.totalScore || 0,
+                    totalScore: res.data.data.homeworkMyscore || 10
+                  });
+                } else {
+                  this.$set(this.homeworkSubmittedMap, video.id, false);
+                }
+              });
+            }
+          }).catch(() => {});
       });
     },
     
@@ -898,7 +931,7 @@ export default {
         correctAnswers: {},
         userAnswers: {}
       };
-      this.$set(this.homeworkSubmittedMap, videoId, false);
+      // 不在这里重置 homeworkSubmittedMap，让 loadHomeworkData 根据服务端记录决定状态
       this.loadHomeworkData(videoId);
     },
     
@@ -911,8 +944,6 @@ export default {
       this.answersMap = {};
       this.answersArrayMap = {};
       this.answerList = [];
-      // 初始状态强制设为未提交
-      this.$set(this.homeworkSubmittedMap, videoId, false);
 
       // 1. 获取对应视频的课后作业试卷ID
       this.$http.get(`homework/findByVideoId?videoId=${videoId}&courseId=${this.courseId}`)
@@ -985,7 +1016,7 @@ export default {
                   
                   // 初始化答案存储结构
                   this.homeworkData.forEach(item => {
-                    if (item.examquestionTypes !== 4) {
+                    if (item.examquestionTypes !== 4 && item.examquestionTypes !== 5) {
                       try {
                         item.examquestionOptions = JSON.parse(item.examquestionOptions);
                       } catch (e) {
@@ -1010,7 +1041,7 @@ export default {
                     });
                   });
                   
-                  // 如果有已提交的数据，恢复提交状态
+                  // 如果有已提交的数据，恢复提交状态；否则明确标记为未提交
                   if (hasSubmitted && submittedData) {
                     // 从答题详情表获取用户答案
                     this.$http.get(`examredetails/page?homeworkrecordId=${this.homeworkrecordId}`)
@@ -1045,7 +1076,7 @@ export default {
                                 
                                   this.currentHomeworkSubmitted = true;
                                   this.currentHomeworkResult = {
-                                    score: submittedData.score || 0,
+                                    score: submittedData.totalScore || submittedData.score || 0,
                                     totalScore: this.totalScore,
                                     correctAnswers: correctAnswers,
                                     userAnswers: answerMap

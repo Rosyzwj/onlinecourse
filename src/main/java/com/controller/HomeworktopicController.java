@@ -61,6 +61,12 @@ public class HomeworktopicController {
     private ExamrewrongquestionService examrewrongquestionService;//错题表
     @Autowired
     private PointsService pointsService;//积分服务
+    @Autowired
+    private HomeworkAlertService homeworkAlertService;//逾期提醒服务
+    @Autowired
+    private TeacherService teacherService;//教师服务
+    @Autowired
+    private CourseService courseService;//课程服务
 
 
     /**
@@ -704,10 +710,68 @@ public class HomeworktopicController {
             examrewrongquestionService.insertBatch(examrewrongquestionList);
         }
         homeworkrecordService.updateById(homeworkrecordEntity);
-        
-        // 积分奖励：提交作业
-        pointsService.awardPoints(yonghuId, "提交作业", Long.valueOf(homeworkId), "完成并提交作业");
-        
+
+        // ===== 逾期检测：判断本次提交是否超过截止时间 =====
+        HomeworkEntity homeworkEntity = homeworkService.selectById(homeworkId);
+        if (homeworkEntity != null && homeworkEntity.getDeadline() != null) {
+            boolean isOverdue = new Date().after(homeworkEntity.getDeadline());
+            // 更新 homeworkrecord 的逾期标记
+            HomeworkrecordEntity recordToUpdate = new HomeworkrecordEntity();
+            recordToUpdate.setId(homeworkrecordEntity.getId());
+            recordToUpdate.setIsOverdue(isOverdue ? 1 : 0);
+            homeworkrecordService.updateById(recordToUpdate);
+
+            // 如果本次逾期，检查该学生在该课程下累计逾期次数
+            if (isOverdue) {
+                Integer courseId = homeworkEntity.getCourseId();
+
+                // 【核心修复】：增加 try-catch 保护，防止报错导致学生无法提交作业
+                try {
+                    int overdueCount = homeworkAlertService.countOverdue(yonghuId, courseId);
+                    // 达到2次且尚无未读提醒，则向教师推送提醒
+                    if (overdueCount >= 2 && !homeworkAlertService.hasUnreadAlert(yonghuId, courseId)) {
+
+                        // 🌟【绝杀修复】：这里一定要加上 .longValue()，解决 Integer 无法转 Long 的报错！
+                        CourseEntity course = courseService.selectById(courseId.longValue());
+
+                        if (course != null && course.getTeacheraccount() != null) {
+
+
+                            // 使用 teacheraccount 去匹配教师表的账号字段
+                            TeacherEntity teacher = teacherService.selectOne(
+                                    new EntityWrapper<TeacherEntity>()
+                                            .eq("teacheraccount", course.getTeacheraccount())
+                            );
+
+                            if (teacher != null) {
+                                HomeworkAlertEntity alert = new HomeworkAlertEntity();
+                                alert.setStudentId(yonghuId);
+                                alert.setTeacherId(teacher.getId());
+                                alert.setCourseId(courseId);
+                                alert.setAlertMessage("该学生已有 " + overdueCount + " 次作业逾期提交，请关注其学习状态！");
+                                alert.setIsRead(0);
+                                alert.setCreateTime(new Date());
+                                homeworkAlertService.insert(alert);
+                                System.out.println("====== 学情预警成功，已写入提醒表！ ======");
+                            } else {
+                                System.out.println("====== 预警拦截：找不到账号为 " + course.getTeacheraccount() + " 的教师 ======");
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("====== 预警逻辑发生内部异常，已安全拦截，不影响学生正常提交作业 ======");
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // 积分奖励：提交作业（表不存在时不影响主流程）
+        try {
+            pointsService.awardPoints(yonghuId, "提交作业", Long.valueOf(homeworkId), "完成并提交作业");
+        } catch (Exception e) {
+            logger.warn("积分奖励失败（可忽略）: {}", e.getMessage());
+        }
+
         return R.ok();
     }
 }

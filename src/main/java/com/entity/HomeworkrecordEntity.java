@@ -86,6 +86,14 @@ public class HomeworkrecordEntity<T> implements Serializable {
 
     private Integer totalScore;
 
+    /**
+     * 是否逾期提交(0否 1是)
+     */
+    @ColumnInfo(comment="是否逾期提交(0否 1是)",type="int(1)")
+    @TableField(value = "is_overdue")
+
+    private Integer isOverdue;
+
 
     /**
      * 考试时间
@@ -173,6 +181,18 @@ public class HomeworkrecordEntity<T> implements Serializable {
 
     public void setTotalScore(Integer totalScore) {
         this.totalScore = totalScore;
+    }
+    /**
+     * 获取：是否逾期提交
+     */
+    public Integer getIsOverdue() {
+        return isOverdue;
+    }
+    /**
+     * 设置：是否逾期提交
+     */
+    public void setIsOverdue(Integer isOverdue) {
+        this.isOverdue = isOverdue;
     }
     /**
 	 * 获取：考试时间

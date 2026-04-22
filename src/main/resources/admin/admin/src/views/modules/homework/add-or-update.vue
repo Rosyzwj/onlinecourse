@@ -49,6 +49,24 @@
                     </el-form-item>
                 </el-col>
 
+                <!-- 截止时间 -->
+                <el-col :span="24">
+                    <el-form-item label="截止时间">
+                        <el-date-picker
+                            v-if="type!='info'"
+                            v-model="ruleForm.deadline"
+                            type="datetime"
+                            placeholder="请选择作业截止时间（不设置则不限时）"
+                            format="yyyy-MM-dd HH:mm"
+                            value-format="yyyy-MM-dd HH:mm:ss"
+                            :style='{"width":"300px"}'>
+                        </el-date-picker>
+                        <el-input v-else v-model="ruleForm.deadline" placeholder="未设置截止时间" readonly
+                                  :style='{"borderRadius":"4px","padding":"0 12px","outline":"none","color":"#000","width":"300px","fontSize":"14px","height":"40px"}'>
+                        </el-input>
+                    </el-form-item>
+                </el-col>
+
                 <!-- 分割线：题目信息 -->
                 <el-col :span="24" v-if="type!='info'">
                     <el-divider content-position="left">题目信息（每题默认10分）</el-divider>
@@ -198,6 +216,8 @@
                 sessionTable: "",
                 role: "",
                 userId: "",
+                questionId: '',      // 编辑时已有的题目ID
+                homeworktopicId: '', // 编辑时已有的关联ID
 
                 // 选项相关
                 options: [],
@@ -219,6 +239,7 @@
                     homeworkName: '',
                     courseId: '',
                     videoId: '',
+                    deadline: '',
                     // examquestion 字段
                     examquestionName: '',
                     examquestionTypes: '',
@@ -361,6 +382,7 @@
                             this.ruleForm.homeworkName = hw.homeworkName;
                             this.ruleForm.courseId = hw.courseId;
                             this.ruleForm.videoId = hw.videoId;
+                            this.ruleForm.deadline = hw.deadline || '';
 
                             // 查找视频标题
                             this.$nextTick(() => {
@@ -375,6 +397,8 @@
                                 .then(({ data: qData }) => {
                                     if (qData && qData.code === 0 && qData.data && qData.data.length > 0) {
                                         const q = qData.data[0];
+                                        this.questionId = q.examquestionId || '';
+                                        this.homeworktopicId = q.id || '';
                                         this.ruleForm.examquestionName = q.examquestionName;
                                         this.ruleForm.examquestionTypes = q.examquestionTypes;
                                         this.ruleForm.examquestionValue = q.examquestionValue;
@@ -413,45 +437,69 @@
                         ? JSON.stringify(this.options)
                         : '[]';
 
-                    // Step 1: 保存 homework
+                    // Step 1: 保存或更新 homework
+                    const isEdit = !!(this.id);
+                    const hwUrl = isEdit ? `homework/update` : `homework/save`;
+                    const hwPayload = {
+                        homeworkName: this.ruleForm.homeworkName,
+                        courseId: this.ruleForm.courseId,
+                        videoId: this.ruleForm.videoId,
+                        deadline: this.ruleForm.deadline || null,
+                        homeworkMyscore: 10,
+                        homeworkTypes: 1,
+                        zujuanTypes: 1,
+                        homeworkDelete: 1
+                    };
+                    if (isEdit) hwPayload.id = parseInt(this.id);
+
                     this.$http({
-                        url: `homework/save`,
+                        url: hwUrl,
                         method: "post",
-                        data: {
-                            homeworkName: this.ruleForm.homeworkName,
-                            courseId: this.ruleForm.courseId,
-                            videoId: this.ruleForm.videoId,
-                            homeworkMyscore: 10,
-                            homeworkTypes: 1,
-                            zujuanTypes: 1,
-                            homeworkDelete: 1
-                        }
+                        data: hwPayload
                     }).then(({ data: hwData }) => {
                         if (!hwData || hwData.code !== 0) {
-                            this.$message.error(hwData.msg || '创建作业失败');
+                            this.$message.error(hwData.msg || '保存作业失败');
                             return;
                         }
-                        const homeworkId = hwData.data.id || hwData.data;
+                        const homeworkId = isEdit ? parseInt(this.id) : (hwData.data.id || hwData.data);
 
-                        // Step 2: 保存 examquestion
+                        // Step 2: 保存或更新 examquestion
+                        const qUrl = (isEdit && this.questionId) ? `examquestion/update` : `examquestion/save`;
+                        const qPayload = {
+                            examquestionName: this.ruleForm.examquestionName,
+                            examquestionTypes: this.ruleForm.examquestionTypes,
+                            examquestionOptions: optionsJson,
+                            examquestionAnswer: answer,
+                            examquestionAnalysis: this.ruleForm.examquestionAnalysis
+                        };
+                        if (isEdit && this.questionId) qPayload.id = parseInt(this.questionId);
+
                         return this.$http({
-                            url: `examquestion/save`,
+                            url: qUrl,
                             method: "post",
-                            data: {
-                                examquestionName: this.ruleForm.examquestionName,
-                                examquestionTypes: this.ruleForm.examquestionTypes,
-                                examquestionOptions: optionsJson,
-                                examquestionAnswer: answer,
-                                examquestionAnalysis: this.ruleForm.examquestionAnalysis
-                            }
+                            data: qPayload
                         }).then(({ data: qData }) => {
                             if (!qData || qData.code !== 0) {
-                                this.$message.error(qData.msg || '创建题目失败');
+                                this.$message.error(qData.msg || '保存题目失败');
                                 return;
                             }
-                            const questionId = qData.data.id || qData.data;
+                            const questionId = (isEdit && this.questionId) ? parseInt(this.questionId) : (qData.data.id || qData.data);
 
-                            // Step 3: 保存 homeworktopic（关联作业和题目）
+                            // Step 3: 关联作业和题目（编辑时跳过，关联已存在）
+                            if (isEdit && this.homeworktopicId) {
+                                this.$message({ message: "操作成功", type: "success", duration: 1500,
+                                    onClose: () => {
+                                        this.parent.showFlag = true;
+                                        this.parent.addOrUpdateFlag = false;
+                                        this.parent.homeworkCrossAddOrUpdateFlag = false;
+                                        this.parent.search();
+                                        this.parent.contentStyleChange();
+                                    }
+                                });
+                                return;
+                            }
+
+                            // Step 3: 新建时保存 homeworktopic（关联作业和题目）
                             return this.$http({
                                 url: `homeworktopic/save`,
                                 method: "post",

@@ -28,7 +28,8 @@ public class KnowledgePointEntity<T> implements Serializable {
 	private String name;
 	private String description;
 	private String content;
-	
+	private Integer category; // 0=编程基础 1=前端开发 2=后端架构 3=数据库 4=通用技术
+
 	@JsonFormat(locale="zh", timezone="GMT+8", pattern="yyyy-MM-dd HH:mm:ss")
 	@DateTimeFormat
 	private Date createTime;
@@ -41,6 +42,8 @@ public class KnowledgePointEntity<T> implements Serializable {
 	public void setDescription(String description) { this.description = description; }
 	public String getContent() { return content; }
 	public void setContent(String content) { this.content = content; }
+	public Integer getCategory() { return category; }
+	public void setCategory(Integer category) { this.category = category; }
 	public Date getCreateTime() { return createTime; }
 	public void setCreateTime(Date createTime) { this.createTime = createTime; }
 }

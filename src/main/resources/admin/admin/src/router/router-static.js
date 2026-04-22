@@ -40,6 +40,7 @@ import examredetails from '@/views/modules/examredetails/list';
 import examrewrongquestion from '@/views/modules/examrewrongquestion/list';
 import examrewrongquestionStatistics from '@/views/modules/examrewrongquestion/statistics';
 import pointsstrategy from '@/views/modules/pointsstrategy/list';
+import knowledgemapManage from '@/views/modules/knowledgemap/manage';
 
 //2.配置路由   注意：名字
 const routes = [
@@ -208,6 +209,11 @@ const routes = [
         path: '/pointsstrategy',
         name: '积分策略管理',
         component: pointsstrategy
+      },
+      {
+        path: '/knowledgemap-manage',
+        name: '知识地图维护',
+        component: knowledgemapManage
       }
     ],
   },

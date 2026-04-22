@@ -98,21 +98,17 @@ public class KnowledgeMapController {
             node.put("id", point.getId().toString());
             node.put("name", point.getName());
 
-            // 1. 动态分配 Category (用于前端上色)
-            int category = 0; // 默认分类(编程基础)
-            Long pointId = point.getId();
-
-            // 根据新的课程ID区间进行精准分类
-            if (pointId >= 100 && pointId <= 104) {
-                category = 0; // 编程基础
-            } else if (pointId >= 105 && pointId <= 109) {
-                category = 1; // 前端开发
-            } else if (pointId >= 110 && pointId <= 114) {
-                category = 2; // 后端架构
-            } else if (pointId >= 115 && pointId <= 119) {
-                category = 3; // 数据库
-            } else if (pointId >= 120 && pointId <= 124) {
-                category = 4; // 通用技术
+            // 1. 动态分配 Category (用于前端上色)，优先读取数据库字段，兜底用 ID 区间
+            int category = 0;
+            if (point.getCategory() != null) {
+                category = point.getCategory();
+            } else {
+                Long pointId = point.getId();
+                if (pointId >= 100 && pointId <= 104) category = 0;
+                else if (pointId >= 105 && pointId <= 109) category = 1;
+                else if (pointId >= 110 && pointId <= 114) category = 2;
+                else if (pointId >= 115 && pointId <= 119) category = 3;
+                else if (pointId >= 120 && pointId <= 124) category = 4;
             }
             node.put("category", category);
 
@@ -283,8 +279,9 @@ public class KnowledgeMapController {
         // 递归收集所有前置节点
         getAllPreRequisites(pointId, allRequiredNodes, visited);
 
-        // 转换成前端需要的 List 格式
+        // 转换成前端需要的 List 格式，反转使顺序为"最基础→...→目标节点"
         List<KnowledgePointEntity> resultList = new ArrayList<>(allRequiredNodes);
+        Collections.reverse(resultList);
 
         // 如果想按某种逻辑排序（可选），目前 LinkedHashSet 已尽量保持插入顺序
         return R.ok().put("data", resultList);
@@ -303,9 +300,10 @@ public class KnowledgeMapController {
             allRequiredNodes.add(currentPoint);
         }
 
-        // 2. 查出谁指向了当前节点（找“爸爸”）
+        // 2. 查出谁指向了当前节点（找”爸爸”），所有关系类型都算前置依赖
         List<KnowledgeRelationEntity> relations = knowledgeRelationDao.selectList(
-                new EntityWrapper<KnowledgeRelationEntity>().eq("to_point_id", currentId)
+                new EntityWrapper<KnowledgeRelationEntity>()
+                        .eq("to_point_id", currentId)
         );
 
         // 3. 对所有的“爸爸”进行递归，去找“爷爷”、“太爷爷”

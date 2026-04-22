@@ -124,6 +124,16 @@ public class HomeworkEntity<T> implements Serializable {
     private Integer courseId;
 
     /**
+     * 作业截止时间
+     */
+    @JsonFormat(locale="zh", timezone="GMT+8", pattern="yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat
+    @ColumnInfo(comment="作业截止时间",type="datetime")
+    @TableField(value = "deadline")
+
+    private Date deadline;
+
+    /**
 	 * 获取：主键
 	 */
     public Integer getId() {
@@ -240,6 +250,18 @@ public class HomeworkEntity<T> implements Serializable {
     public void setCourseId(Integer courseId) {
         this.courseId = courseId;
     }
+    /**
+     * 获取：作业截止时间
+     */
+    public Date getDeadline() {
+        return deadline;
+    }
+    /**
+     * 设置：作业截止时间
+     */
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
+    }
     @Override
     public String toString() {
         return "Homework{" +
@@ -253,6 +275,7 @@ public class HomeworkEntity<T> implements Serializable {
             ", createTime=" + DateUtil.convertString(createTime,"yyyy-MM-dd") +
             ", videoId=" + videoId +
             ", courseId=" + courseId +
+            ", deadline=" + DateUtil.convertString(deadline,"yyyy-MM-dd HH:mm:ss") +
         "}";
     }
 }

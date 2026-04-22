@@ -49,4 +49,9 @@ public class HomeworkServiceImpl extends ServiceImpl<HomeworkDao, HomeworkEntity
         return null;
     }
 
+    @Override
+    public void updateHomeworkWithDeadline(HomeworkEntity homework) {
+        baseMapper.updateHomeworkWithDeadline(homework);
+    }
+
 }

@@ -13,6 +13,7 @@
         ,a.create_time as createTime
         ,a.video_id as videoId
         ,a.course_id as courseId
+        ,a.deadline as deadline
     </sql>
     <select id="selectListView" parameterType="map" resultType="com.entity.view.HomeworkView" >
         SELECT
@@ -60,5 +61,18 @@
         </where>
         order by a.${params.sort} ${params.order}
     </select>
+
+    <!-- 更新作业，deadline 支持置 null -->
+    <update id="updateHomeworkWithDeadline">
+        UPDATE homework SET
+            homework_name     = #{hw.homeworkName},
+            course_id         = #{hw.courseId},
+            video_id          = #{hw.videoId},
+            homework_myscore  = #{hw.homeworkMyscore},
+            homework_types    = #{hw.homeworkTypes},
+            zujuan_types      = #{hw.zujuanTypes},
+            deadline          = #{hw.deadline}
+        WHERE id = #{hw.id}
+    </update>
 
 </mapper>

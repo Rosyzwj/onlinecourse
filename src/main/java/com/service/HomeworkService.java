@@ -19,4 +19,7 @@ public interface HomeworkService extends IService<HomeworkEntity> {
     // 添加根据视频ID和用途查询作业的方法声明
     HomeworkEntity findByVideoId(Integer videoId, Integer courseId);
 
+    // 更新作业（含 deadline，支持置 null）
+    void updateHomeworkWithDeadline(HomeworkEntity homework);
+
 }
