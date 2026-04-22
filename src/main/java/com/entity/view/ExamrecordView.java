@@ -1,0 +1,297 @@
+package com.entity.view;
+
+import com.annotation.ColumnInfo;
+import com.entity.ExamrecordEntity;
+import com.baomidou.mybatisplus.annotations.TableName;
+import org.apache.commons.beanutils.BeanUtils;
+import java.lang.reflect.InvocationTargetException;
+import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.io.Serializable;
+import java.util.Date;
+import com.utils.DateUtil;
+
+/**
+* 考试记录表
+* 后端返回视图实体辅助类
+* （通常后端关联的表或者自定义的字段需要返回使用）
+*/
+@TableName("examrecord")
+public class ExamrecordView extends ExamrecordEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	//当前表
+
+	//级联表 试卷
+		/**
+		* 试卷名称
+		*/
+
+		@ColumnInfo(comment="试卷名称",type="varchar(200)")
+		private String exampaperName;
+		/**
+		* 考试时长(分钟)
+		*/
+
+		@ColumnInfo(comment="考试时长(分钟)",type="int(11)")
+		private Integer exampaperDate;
+		/**
+		* 试卷总分数
+		*/
+
+		@ColumnInfo(comment="试卷总分数",type="int(20)")
+		private Integer exampaperMyscore;
+
+		/**
+		* 试卷状态
+		*/
+		@ColumnInfo(comment="试卷状态",type="int(11)")
+		private Integer exampaperTypes;
+			/**
+			* 试卷状态的值
+			*/
+			@ColumnInfo(comment="试卷状态的字典表值",type="varchar(200)")
+			private String exampaperValue;
+		/**
+		* 组卷方式
+		*/
+		@ColumnInfo(comment="组卷方式",type="int(11)")
+		private Integer zujuanTypes;
+			/**
+			* 组卷方式的值
+			*/
+			@ColumnInfo(comment="组卷方式的字典表值",type="varchar(200)")
+			private String zujuanValue;
+		/**
+		* 逻辑删除（1代表未删除 2代表已删除）
+		*/
+
+		@ColumnInfo(comment="逻辑删除（1代表未删除 2代表已删除）",type="int(255)")
+		private Integer exampaperDelete;
+	//级联表 学生
+		/**
+		* 学生姓名
+		*/
+
+		@ColumnInfo(comment="学生姓名",type="varchar(200)")
+		private String studentname;
+		/**
+		* 学生手机号
+		*/
+
+		@ColumnInfo(comment="学生手机号",type="varchar(200)")
+		private String shoujihaoma;
+
+		/**
+		* 学生头像
+		*/
+
+		@ColumnInfo(comment="学生头像",type="varchar(200)")
+		private String xiangpian;
+		/**
+		* 学生邮箱
+		*/
+
+		@ColumnInfo(comment="学生邮箱",type="varchar(200)")
+		private String youxiang;
+
+
+
+	public ExamrecordView() {
+
+	}
+
+	public ExamrecordView(ExamrecordEntity examrecordEntity) {
+		try {
+			BeanUtils.copyProperties(this, examrecordEntity);
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+
+
+
+
+	//级联表的get和set 试卷
+
+		/**
+		* 获取： 试卷名称
+		*/
+		public String getExampaperName() {
+			return exampaperName;
+		}
+		/**
+		* 设置： 试卷名称
+		*/
+		public void setExampaperName(String exampaperName) {
+			this.exampaperName = exampaperName;
+		}
+
+		/**
+		* 获取： 考试时长(分钟)
+		*/
+		public Integer getExampaperDate() {
+			return exampaperDate;
+		}
+		/**
+		* 设置： 考试时长(分钟)
+		*/
+		public void setExampaperDate(Integer exampaperDate) {
+			this.exampaperDate = exampaperDate;
+		}
+
+		/**
+		* 获取： 试卷总分数
+		*/
+		public Integer getExampaperMyscore() {
+			return exampaperMyscore;
+		}
+		/**
+		* 设置： 试卷总分数
+		*/
+		public void setExampaperMyscore(Integer exampaperMyscore) {
+			this.exampaperMyscore = exampaperMyscore;
+		}
+
+
+
+
+		/**
+		* 获取： 试卷状态
+		*/
+		public Integer getExampaperTypes() {
+			return exampaperTypes;
+		}
+		/**
+		* 设置： 试卷状态
+		*/
+		public void setExampaperTypes(Integer exampaperTypes) {
+			this.exampaperTypes = exampaperTypes;
+		}
+
+
+			/**
+			* 获取： 试卷状态的值
+			*/
+			public String getExampaperValue() {
+				return exampaperValue;
+			}
+			/**
+			* 设置： 试卷状态的值
+			*/
+			public void setExampaperValue(String exampaperValue) {
+				this.exampaperValue = exampaperValue;
+			}
+		/**
+		* 获取： 组卷方式
+		*/
+		public Integer getZujuanTypes() {
+			return zujuanTypes;
+		}
+		/**
+		* 设置： 组卷方式
+		*/
+		public void setZujuanTypes(Integer zujuanTypes) {
+			this.zujuanTypes = zujuanTypes;
+		}
+
+
+			/**
+			* 获取： 组卷方式的值
+			*/
+			public String getZujuanValue() {
+				return zujuanValue;
+			}
+			/**
+			* 设置： 组卷方式的值
+			*/
+			public void setZujuanValue(String zujuanValue) {
+				this.zujuanValue = zujuanValue;
+			}
+
+		/**
+		* 获取： 逻辑删除（1代表未删除 2代表已删除）
+		*/
+		public Integer getExampaperDelete() {
+			return exampaperDelete;
+		}
+		/**
+		* 设置： 逻辑删除（1代表未删除 2代表已删除）
+		*/
+		public void setExampaperDelete(Integer exampaperDelete) {
+			this.exampaperDelete = exampaperDelete;
+		}
+	//级联表的get和set 学生
+
+		/**
+		* 获取： 学生姓名
+		*/
+		public String getStudentname() {
+			return studentname;
+		}
+		/**
+		* 设置： 学生姓名
+		*/
+		public void setStudentname(String studentname) {
+			this.studentname = studentname;
+		}
+
+		/**
+		* 获取： 学生手机号
+		*/
+		public String getShoujihaoma() {
+			return shoujihaoma;
+		}
+		/**
+		* 设置： 学生手机号
+		*/
+		public void setShoujihaoma(String shoujihaoma) {
+			this.shoujihaoma = shoujihaoma;
+		}
+
+
+
+		/**
+		* 获取： 学生头像
+		*/
+		public String getXiangpian() {
+			return xiangpian;
+		}
+		/**
+		* 设置： 学生头像
+		*/
+		public void setXiangpian(String xiangpian) {
+			this.xiangpian = xiangpian;
+		}
+
+		/**
+		* 获取： 学生邮箱
+		*/
+		public String getYouxiang() {
+			return youxiang;
+		}
+		/**
+		* 设置： 学生邮箱
+		*/
+		public void setYouxiang(String youxiang) {
+			this.youxiang = youxiang;
+		}
+
+
+	@Override
+	public String toString() {
+		return "ExamrecordView{" +
+			", studentname=" + studentname +
+			", shoujihaoma=" + shoujihaoma +
+
+			", xiangpian=" + xiangpian +
+			", youxiang=" + youxiang +
+			", exampaperName=" + exampaperName +
+			", exampaperDate=" + exampaperDate +
+			", exampaperMyscore=" + exampaperMyscore +
+			", exampaperDelete=" + exampaperDelete +
+			"} " + super.toString();
+	}
+}

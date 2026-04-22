@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.SelectionapplicationDao">
+
+    <resultMap id="BaseResultMap" type="com.entity.SelectionapplicationEntity">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="course_id" property="courseId" jdbcType="BIGINT"/>
+        <result column="apply_time" property="applyTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="review_time" property="reviewTime" jdbcType="TIMESTAMP"/>
+        <result column="reviewer_id" property="reviewerId" jdbcType="INTEGER"/>
+        <result column="review_remark" property="reviewRemark" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 扩展查询 -->
+    <select id="selectWithUserAndCourse" resultType="com.entity.vo.SelectionapplicationVO">
+        SELECT xksq.*, u.username AS user_name, k.coursename AS course_name, r.username AS reviewer_name
+        FROM selectionapplication xksq
+        LEFT JOIN user u ON xksq.user_id = u.id
+        LEFT JOIN course k ON xksq.course_id = k.id
+        LEFT JOIN user r ON xksq.reviewer_id = r.id
+        <where>
+            <if test="id != null">
+                AND xksq.id = #{id}
+            </if>
+            <if test="userId != null">
+                AND xksq.user_id = #{userId}
+            </if>
+            <if test="courseId != null">
+                AND xksq.course_id = #{courseId}
+            </if>
+            <if test="status != null">
+                AND xksq.status = #{status}
+            </if>
+        </where>
+    </select>
+    <!-- 查询选课申请视图列表 -->
+    <select id="selectListView" resultType="com.entity.view.SelectionapplicationView">
+        SELECT
+            sq.*,
+            u.name AS username,
+            k.coursename AS courseName,
+            r.username AS reviewerName,
+            CASE
+                WHEN sq.status = 0 THEN '待审核'
+                WHEN sq.status = 1 THEN '已通过'
+                WHEN sq.status = 2 THEN '已拒绝'
+                ELSE '未知状态'
+                END AS statusText
+        FROM
+            selectionapplication sq
+                LEFT JOIN
+            student u ON sq.user_id = u.id
+                LEFT JOIN
+            course k ON sq.course_id = k.id
+                LEFT JOIN
+            users r ON sq.reviewer_id = r.id
+            ${ew.sqlSegment}
+    </select>
+
+    <!-- 查询单个选课申请视图 -->
+    <select id="selectView" resultType="com.entity.view.SelectionapplicationView">
+        SELECT
+            sq.*,
+            u.name AS username,
+            k.coursename AS courseName,
+            r.username AS reviewerName,
+            CASE
+                WHEN sq.status = 0 THEN '待审核'
+                WHEN sq.status = 1 THEN '已通过'
+                WHEN sq.status = 2 THEN '已拒绝'
+                ELSE '未知状态'
+                END AS statusText
+        FROM
+            selectionapplication sq
+                LEFT JOIN
+            student u ON sq.user_id = u.id
+                LEFT JOIN
+            course k ON sq.course_id = k.id
+                LEFT JOIN
+            users r ON sq.reviewer_id = r.id
+            ${ew.sqlSegment}
+    </select>
+</mapper>

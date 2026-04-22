@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.CourseDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.entity.CourseEntity" id="courseMap">
+        <result property="level" column="level"/>
+        <result property="coursenumber" column="coursenumber"/>
+        <result property="coursename" column="coursename"/>
+        <result property="coursesort" column="coursesort"/>
+        <result property="cover" column="cover"/>
+        <result property="courseduration" column="courseduration"/>
+        <result property="courseintroduction" column="courseintroduction"/>
+        <result property="coursedetail" column="coursedetail"/>
+        <result property="teacheraccount" column="teacheraccount"/>
+        <result property="teachername" column="teachername"/>
+		<result property="video" column="video"/>
+		<result property="progress" column="progress"/>
+		<result property="lastLearnTime" column="last_learn_time"/>
+		<result property="videoprogress" column="videoprogress"/>
+
+    </resultMap>
+
+	<select id="selectListVO"
+		resultType="com.entity.vo.CourseVO" >
+		SELECT * FROM course  course
+        <where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+	
+	<select id="selectVO"
+		resultType="com.entity.vo.CourseVO" >
+		SELECT  course.* FROM course  course
+ 		<where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+
+    <select id="selectListView"
+		resultType="com.entity.view.CourseView" >
+
+		SELECT  course.* FROM course  course
+        <where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+	
+	<select id="selectView"
+		resultType="com.entity.view.CourseView" >
+		SELECT * FROM course  course <where> 1=1 ${ew.sqlSegment}</where>
+	</select>
+	<!-- 根据ID查询课程信息 -->
+	<select id="selectById" parameterType="java.lang.Long" resultType="com.entity.CourseEntity">
+		SELECT
+			id, progress, videoprogress, last_learn_time,
+			addtime, level, coursenumber, coursename,
+			coursesort, cover, courseduration, courseintroduction,
+			coursedetail, teacheraccount, teachername, video
+		FROM course
+		WHERE id = #{id}
+	</select>
+
+	<!-- 更新课程进度信息 -->
+	<update id="updateProgress" parameterType="com.entity.CourseEntity">
+		UPDATE course
+		SET
+		progress = #{course.progress},
+		videoprogress = #{course.videoprogress},
+		last_learn_time = #{course.lastLearnTime, jdbcType=TIMESTAMP}  <!-- 明确指定JDBC类型 -->
+		WHERE id = #{course.id}
+	</update>
+
+</mapper>

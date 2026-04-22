@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.ExamrecordDao">
+
+
+    <resultMap id="examRecordMap" type="com.entity.view.ExamRecord">
+        <result property="examrecord_uuid_number" column="examrecord_uuid_number"/>
+        <result property="yonghu_id" column="yonghu_id"/>
+        <result property="exampaper_name" column="exampaper_name"/>
+
+        <result property="total_score" column="total_score"/>
+        <result property="rank" column="rank"/>
+    </resultMap>
+
+    <select id="selectExamRecordWithRank" resultMap="examRecordMap">
+        SELECT
+            er.id AS 'id',
+            er.yonghu_id AS 'yonghuId',
+            er.examrecord_uuid_number AS 'examrecord_uuid_number',
+                ep.exampaper_name AS 'exampaper_name',
+                er.total_score AS 'total_score',
+                RANK() OVER (PARTITION BY er.exampaper_id ORDER BY er.total_score DESC) AS 'rank'
+        FROM
+            examrecord er
+                JOIN
+            exampaper ep ON er.exampaper_id = ep.id
+        WHERE
+            1 = 1
+          AND (er.yonghu_id = #{yonghu_id} OR #{yonghu_id} IS NULL)
+        ORDER BY
+            er.exampaper_id, er.total_score DESC
+    </select>
+
+    <select id="selectGroupBy" resultType="com.entity.view.ExamrecordView">
+        SELECT
+        e.id AS id,
+        e.yonghu_id AS yonghuId,
+        s.name AS studentname,
+        e.exampaper_id AS exampaperId,
+        p.exampaper_name AS exampaperName,
+        e.total_score AS totalScore,
+        e.insert_time AS insertTime,
+        e.create_time AS createTime
+        FROM (
+        -- 子查询：获取每个学生每门考试的最新记录
+        SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY yonghu_id, exampaper_id ORDER BY insert_time DESC) as rn
+        FROM examrecord
+        WHERE total_score IS NOT NULL
+        AND total_score > 0
+        ) e
+        LEFT JOIN student s ON e.yonghu_id = s.id
+        LEFT JOIN exampaper p ON e.exampaper_id = p.id
+        WHERE e.rn = 1  -- 只保留最新的记录
+        AND e.total_score IS NOT NULL
+        AND s.id IS NOT NULL  -- 确保学生信息存在
+        <if test="ew != null and ew.sqlSegment != null and ew.sqlSegment != ''">
+            AND ${ew.sqlSegment}
+        </if>
+        ORDER BY e.insert_time DESC
+    </select>
+
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id as id
+        ,a.examrecord_uuid_number as examrecordUuidNumber
+        ,a.yonghu_id as yonghuId
+        ,a.exampaper_id as exampaperId
+        ,a.total_score as totalScore
+        ,a.insert_time as insertTime
+        ,a.create_time as createTime
+    </sql>
+    <select id="selectListView" parameterType="map" resultType="com.entity.view.ExamrecordView" >
+        SELECT
+        <include refid="Base_Column_List" />
+        <!-- 级联表的字段 -->
+        ,exampaper.exampaper_name as exampaperName
+        ,exampaper.exampaper_date as exampaperDate
+        ,exampaper.exampaper_myscore as exampaperMyscore
+
+        ,exampaper.exampaper_types as exampaperTypes
+        ,exampaper.zujuan_types as zujuanTypes
+        ,exampaper.exampaper_delete as exampaperDelete
+        ,yonghu.name as studentname
+        ,yonghu.phone as shoujihaoma
+
+        ,yonghu.profile as xiangpian
+        ,yonghu.level as youxiang
+
+        FROM examrecord  a
+        left JOIN exampaper exampaper ON a.exampaper_id = exampaper.id
+        left JOIN student yonghu ON a.yonghu_id = yonghu.id
+
+        <where>
+            <if test="params.ids != null">
+                and a.id in
+                <foreach item="item" index="index" collection="params.ids" open="(" separator="," close=")">
+                #{item}
+                </foreach>
+            </if>
+            <if test=" params.examrecordUuidNumber != '' and params.examrecordUuidNumber != null and params.examrecordUuidNumber != 'null' ">
+                and a.examrecord_uuid_number like CONCAT('%',#{params.examrecordUuidNumber},'%')
+            </if>
+            <if test="params.yonghuId != null and params.yonghuId != ''">
+                and (
+                    a.yonghu_id = #{params.yonghuId}
+                )
+            </if>
+            <if test="params.exampaperId != null and params.exampaperId != ''">
+                and (
+                    a.exampaper_id = #{params.exampaperId}
+                )
+            </if>
+            <if test="params.totalScoreStart != null and params.totalScoreStart != ''">
+                <![CDATA[  and a.total_score >= #{params.totalScoreStart}   ]]>
+            </if>
+            <if test="params.totalScoreEnd != null and params.totalScoreEnd != ''">
+                <![CDATA[  and a.total_score <= #{params.totalScoreEnd}   ]]>
+            </if>
+             <if test="params.totalScore != null and params.totalScore != ''">
+                and a.total_score = #{params.totalScore}
+             </if>
+            <if test=" params.insertTimeStart != '' and params.insertTimeStart != null ">
+                <![CDATA[  and UNIX_TIMESTAMP(a.insert_time) >= UNIX_TIMESTAMP(#{params.insertTimeStart}) ]]>
+            </if>
+            <if test=" params.insertTimeEnd != '' and params.insertTimeEnd != null ">
+                <![CDATA[  and UNIX_TIMESTAMP(a.insert_time) <= UNIX_TIMESTAMP(#{params.insertTimeEnd}) ]]>
+            </if>
+
+                <!-- 判断试卷的id不为空 -->
+            <if test=" params.exampaperIdNotNull != '' and params.exampaperIdNotNull != null and params.exampaperIdNotNull != 'null' ">
+                and a.exampaper_id IS NOT NULL
+            </if>
+            <if test=" params.exampaperName != '' and params.exampaperName != null and params.exampaperName != 'null' ">
+                and exampaper.exampaper_name like CONCAT('%',#{params.exampaperName},'%')
+            </if>
+            <if test="params.exampaperDateStart != null  and params.exampaperDateStart != '' ">
+                <![CDATA[  and exampaper.exampaper_date >= #{params.exampaperDateStart}   ]]>
+            </if>
+            <if test="params.exampaperDateEnd != null  and params.exampaperDateEnd != '' ">
+                <![CDATA[  and exampaper.exampaper_date <= #{params.exampaperDateEnd}   ]]>
+            </if>
+            <if test="params.exampaperDate != null  and params.exampaperDate != '' ">
+                and exampaper.exampaper_date = #{params.exampaperDate}
+            </if>
+            <if test="params.exampaperMyscoreStart != null  and params.exampaperMyscoreStart != '' ">
+                <![CDATA[  and exampaper.exampaper_myscore >= #{params.exampaperMyscoreStart}   ]]>
+            </if>
+            <if test="params.exampaperMyscoreEnd != null  and params.exampaperMyscoreEnd != '' ">
+                <![CDATA[  and exampaper.exampaper_myscore <= #{params.exampaperMyscoreEnd}   ]]>
+            </if>
+            <if test="params.exampaperMyscore != null  and params.exampaperMyscore != '' ">
+                and exampaper.exampaper_myscore = #{params.exampaperMyscore}
+            </if>
+
+
+            <if test="params.exampaperTypes != null  and params.exampaperTypes != ''">
+                and exampaper.exampaper_types = #{params.exampaperTypes}
+            </if>
+
+            <if test="params.zujuanTypes != null  and params.zujuanTypes != ''">
+                and exampaper.zujuan_types = #{params.zujuanTypes}
+            </if>
+
+            <if test="params.exampaperDeleteStart != null  and params.exampaperDeleteStart != '' ">
+                <![CDATA[  and exampaper.exampaper_delete >= #{params.exampaperDeleteStart}   ]]>
+            </if>
+            <if test="params.exampaperDeleteEnd != null  and params.exampaperDeleteEnd != '' ">
+                <![CDATA[  and exampaper.exampaper_delete <= #{params.exampaperDeleteEnd}   ]]>
+            </if>
+            <if test="params.exampaperDelete != null  and params.exampaperDelete != '' ">
+                and exampaper.exampaper_delete = #{params.exampaperDelete}
+            </if>
+                <!-- 判断学生的id不为空 -->
+            <if test=" params.yonghuIdNotNull != '' and params.yonghuIdNotNull != null and params.yonghuIdNotNull != 'null' ">
+                and a.yonghu_id IS NOT NULL
+            </if>
+            <if test=" params.studentname != '' and params.studentname != null and params.studentname != 'null' ">
+                and yonghu.studentname like CONCAT('%',#{params.studentname},'%')
+            </if>
+            <if test=" params.shoujihaoma != '' and params.shoujihaoma != null and params.shoujihaoma != 'null' ">
+                and yonghu.shoujihaoma like CONCAT('%',#{params.shoujihaoma},'%')
+            </if>
+
+            <if test=" params.youxiang != '' and params.youxiang != null and params.youxiang != 'null' ">
+                and yonghu.youxiang like CONCAT('%',#{params.youxiang},'%')
+            </if>
+        </where>
+        order by a.${params.sort} ${params.order}
+    </select>
+
+
+</mapper>

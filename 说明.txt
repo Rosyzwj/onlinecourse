@@ -1,0 +1,11 @@
+路径地址：
+localhost:8080/onlinecourseteachsys/front/dist/index.html
+localhost:8080/onlinecourseteachsys/admin/dist/index.html
+
+管理员账号：admin
+管理员密码：admin
+用户 1     1
+
+教师 222 222
+
+添加一行测试文字

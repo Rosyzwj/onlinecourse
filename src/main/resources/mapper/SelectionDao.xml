@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.SelectionDao">
+
+    <resultMap id="BaseResultMap" type="com.entity.SelectionEntity">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="course_id" property="courseId" jdbcType="BIGINT"/>
+        <result column="enroll_time" property="enrollTime" jdbcType="TIMESTAMP"/>
+        <result column="progress" property="progress" jdbcType="DECIMAL"/>
+        <result column="last_learn_time" property="lastLearnTime" jdbcType="TIMESTAMP"/>
+        <result column="completion_time" property="completionTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <!-- 扩展查询 -->
+    <select id="selectWithUserAndCourse" resultType="com.entity.vo.SelectionVO">
+        SELECT xk.*, u.username AS user_name, k.coursename AS course_name,
+        CASE xk.status
+        WHEN 1 THEN '进行中'
+        WHEN 2 THEN '已完成'
+        WHEN 3 THEN '已放弃'
+        ELSE '未知'
+        END AS status_text
+        FROM selection xk
+        LEFT JOIN student u ON xk.user_id = u.id
+        LEFT JOIN course k ON xk.course_id = k.id
+        <where>
+            <if test="id != null">
+                AND xk.id = #{id}
+            </if>
+            <if test="userId != null">
+                AND xk.user_id = #{userId}
+            </if>
+            <if test="courseId != null">
+                AND xk.course_id = #{courseId}
+            </if>
+            <if test="status != null">
+                AND xk.status = #{status}
+            </if>
+        </where>
+    </select>
+    <!-- 根据用户ID和课程ID查询选课记录 -->
+    <select id="selectByUserAndCourse" resultType="com.entity.SelectionEntity">
+        SELECT id, user_id, course_id, progress, last_learn_time, status
+        FROM selection
+        WHERE user_id = #{userId} AND course_id = #{courseId}
+            LIMIT 1
+    </select>
+
+    <!-- 更新选课记录的进度信息 -->
+    <update id="updateProgress" parameterType="com.entity.SelectionEntity">
+        UPDATE selection
+        SET
+            progress = #{progress},
+            last_learn_time = #{lastLearnTime, jdbcType=TIMESTAMP},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 插入新的选课记录 -->
+    <insert id="insert" parameterType="com.entity.SelectionEntity">
+        INSERT INTO selection (user_id, course_id, progress, last_learn_time, status)
+        VALUES (#{userId}, #{courseId}, #{progress}, #{lastLearnTime, jdbcType=TIMESTAMP}, #{status})
+    </insert>
+
+</mapper>

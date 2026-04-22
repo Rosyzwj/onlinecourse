@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.HomeworkrecordDao">
+
+
+    <resultMap id="homeworkrecordMap" type="com.entity.view.HomeworkRecord">
+        <result property="homeworkrecord_uuid_number" column="homeworkrecord_uuid_number"/>
+        <result property="yonghu_id" column="yonghu_id"/>
+        <result property="homework_name" column="homework_name"/>
+
+        <result property="total_score" column="total_score"/>
+        <result property="rank" column="rank"/>
+    </resultMap>
+
+    <select id="selectHomeworkrecordWithRank" resultMap="homeworkrecordMap">
+        SELECT
+            er.id AS 'id',
+            er.yonghu_id AS 'yonghuId',
+            er.homeworkrecord_uuid_number AS 'homeworkrecord_uuid_number',
+                ep.homework_name AS 'homework_name',
+                er.total_score AS 'total_score',
+                RANK() OVER (PARTITION BY er.homework_id ORDER BY er.total_score DESC) AS 'rank'
+        FROM
+            homeworkrecord er
+                JOIN
+            homework ep ON er.homework_id = ep.id
+        WHERE
+            1 = 1
+          AND (er.yonghu_id = #{yonghu_id} OR #{yonghu_id} IS NULL)
+        ORDER BY
+            er.homework_id, er.total_score DESC
+    </select>
+
+
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id as id
+        ,a.homeworkrecord_uuid_number as homeworkrecordUuidNumber
+        ,a.yonghu_id as yonghuId
+        ,a.homework_id as homeworkId
+        ,a.total_score as totalScore
+        ,a.insert_time as insertTime
+        ,a.create_time as createTime
+    </sql>
+    <select id="selectListView" parameterType="map" resultType="com.entity.view.HomeworkrecordView" >
+        SELECT
+        <include refid="Base_Column_List" />
+        <!-- 级联表的字段 -->
+        ,homework.homework_name as homeworkName
+        ,homework.homework_myscore as homeworkMyscore
+
+        ,homework.homework_types as homeworkTypes
+        ,homework.zujuan_types as zujuanTypes
+        ,homework.homework_delete as homeworkDelete
+        ,yonghu.name as studentname
+        ,yonghu.phone as shoujihaoma
+
+        ,yonghu.profile as xiangpian
+        ,yonghu.level as youxiang
+
+        FROM homeworkrecord  a
+        left JOIN homework homework ON a.homework_id = homework.id
+        left JOIN student yonghu ON a.yonghu_id = yonghu.id
+
+        <where>
+            <if test="params.ids != null">
+                and a.id in
+                <foreach item="item" index="index" collection="params.ids" open="(" separator="," close=")">
+                #{item}
+                </foreach>
+            </if>
+            <if test=" params.homeworkrecordUuidNumber != '' and params.homeworkrecordUuidNumber != null and params.homeworkrecordUuidNumber != 'null' ">
+                and a.homeworkrecord_uuid_number like CONCAT('%',#{params.homeworkrecordUuidNumber},'%')
+            </if>
+            <if test="params.yonghuId != null and params.yonghuId != ''">
+                and (
+                    a.yonghu_id = #{params.yonghuId}
+                )
+            </if>
+            <if test="params.homeworkId != null and params.homeworkId != ''">
+                and (
+                    a.homework_id = #{params.homeworkId}
+                )
+            </if>
+            <if test="params.totalScoreStart != null and params.totalScoreStart != ''">
+                <![CDATA[  and a.total_score >= #{params.totalScoreStart}   ]]>
+            </if>
+            <if test="params.totalScoreEnd != null and params.totalScoreEnd != ''">
+                <![CDATA[  and a.total_score <= #{params.totalScoreEnd}   ]]>
+            </if>
+             <if test="params.totalScore != null and params.totalScore != ''">
+                and a.total_score = #{params.totalScore}
+             </if>
+            <if test=" params.insertTimeStart != '' and params.insertTimeStart != null ">
+                <![CDATA[  and UNIX_TIMESTAMP(a.insert_time) >= UNIX_TIMESTAMP(#{params.insertTimeStart}) ]]>
+            </if>
+            <if test=" params.insertTimeEnd != '' and params.insertTimeEnd != null ">
+                <![CDATA[  and UNIX_TIMESTAMP(a.insert_time) <= UNIX_TIMESTAMP(#{params.insertTimeEnd}) ]]>
+            </if>
+
+                <!-- 判断试卷的id不为空 -->
+            <if test=" params.homeworkIdNotNull != '' and params.homeworkIdNotNull != null and params.homeworkIdNotNull != 'null' ">
+                and a.homework_id IS NOT NULL
+            </if>
+            <if test=" params.homeworkName != '' and params.homeworkName != null and params.homeworkName != 'null' ">
+                and homework.homework_name like CONCAT('%',#{params.homeworkName},'%')
+            </if>
+            <if test="params.homeworkMyscoreStart != null  and params.homeworkMyscoreStart != '' ">
+                <![CDATA[  and homework.homework_myscore >= #{params.homeworkMyscoreStart}   ]]>
+            </if>
+            <if test="params.homeworkMyscoreEnd != null  and params.homeworkMyscoreEnd != '' ">
+                <![CDATA[  and homework.homework_myscore <= #{params.homeworkMyscoreEnd}   ]]>
+            </if>
+            <if test="params.homeworkMyscore != null  and params.homeworkMyscore != '' ">
+                and homework.homework_myscore = #{params.homeworkMyscore}
+            </if>
+
+
+            <if test="params.homeworkTypes != null  and params.homeworkTypes != ''">
+                and homework.homework_types = #{params.homeworkTypes}
+            </if>
+
+            <if test="params.zujuanTypes != null  and params.zujuanTypes != ''">
+                and homework.zujuan_types = #{params.zujuanTypes}
+            </if>
+
+            <if test="params.homeworkDeleteStart != null  and params.homeworkDeleteStart != '' ">
+                <![CDATA[  and homework.homework_delete >= #{params.homeworkDeleteStart}   ]]>
+            </if>
+            <if test="params.homeworkDeleteEnd != null  and params.homeworkDeleteEnd != '' ">
+                <![CDATA[  and homework.homework_delete <= #{params.homeworkDeleteEnd}   ]]>
+            </if>
+            <if test="params.homeworkDelete != null  and params.homeworkDelete != '' ">
+                and homework.homework_delete = #{params.homeworkDelete}
+            </if>
+                <!-- 判断学生的id不为空 -->
+            <if test=" params.yonghuIdNotNull != '' and params.yonghuIdNotNull != null and params.yonghuIdNotNull != 'null' ">
+                and a.yonghu_id IS NOT NULL
+            </if>
+            <if test=" params.studentname != '' and params.studentname != null and params.studentname != 'null' ">
+                and yonghu.studentname like CONCAT('%',#{params.studentname},'%')
+            </if>
+            <if test=" params.shoujihaoma != '' and params.shoujihaoma != null and params.shoujihaoma != 'null' ">
+                and yonghu.shoujihaoma like CONCAT('%',#{params.shoujihaoma},'%')
+            </if>
+
+            <if test=" params.youxiang != '' and params.youxiang != null and params.youxiang != 'null' ">
+                and yonghu.youxiang like CONCAT('%',#{params.youxiang},'%')
+            </if>
+        </where>
+        order by a.${params.sort} ${params.order}
+    </select>
+
+</mapper>

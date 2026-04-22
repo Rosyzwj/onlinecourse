@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.HomeworktopicDao">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id as id
+        ,a.homework_id as homeworkId
+        ,a.examquestion_id as examquestionId
+        ,a.homeworktopic_number as homeworktopicNumber
+        ,a.create_time as createTime
+
+    </sql>
+    <select id="selectListView" parameterType="map" resultType="com.entity.view.HomeworktopicView" >
+        SELECT
+        <include refid="Base_Column_List" />
+        <!-- 级联表的字段 -->
+        ,homework.homework_name as homeworkName
+        ,homework.homework_myscore as homeworkMyscore
+
+        ,homework.homework_types as homeworkTypes
+        ,homework.zujuan_types as zujuanTypes
+        ,homework.homework_delete as homeworkDelete
+        ,examquestion.examquestion_name as examquestionName
+
+        ,examquestion.examquestion_options as examquestionOptions
+        ,examquestion.examquestion_answer as examquestionAnswer
+        ,examquestion.examquestion_analysis as examquestionAnalysis
+        ,examquestion.examquestion_types as examquestionTypes
+        ,examquestion.examquestion_sequence as examquestionSequence
+
+        FROM homeworktopic  a
+        left JOIN homework homework ON a.homework_id = homework.id
+        left JOIN examquestion examquestion ON a.examquestion_id = examquestion.id
+
+        <where>
+            <if test="params.ids != null">
+                and a.id in
+                <foreach item="item" index="index" collection="params.ids" open="(" separator="," close=")">
+                #{item}
+                </foreach>
+            </if>
+            <if test="params.homeworkId != null and params.homeworkId != ''">
+                and (
+                    a.homework_id = #{params.homeworkId}
+                )
+            </if>
+            <if test="params.examquestionId != null and params.examquestionId != ''">
+                and (
+                    a.examquestion_id = #{params.examquestionId}
+                )
+            </if>
+            <if test="params.homeworktopicNumberStart != null and params.homeworktopicNumberStart != ''">
+                <![CDATA[  and a.homeworktopic_number >= #{params.homeworktopicNumberStart}   ]]>
+            </if>
+            <if test="params.homeworktopicNumberEnd != null and params.homeworktopicNumberEnd != ''">
+                <![CDATA[  and a.homeworktopic_number <= #{params.homeworktopicNumberEnd}   ]]>
+            </if>
+             <if test="params.homeworktopicNumber != null and params.homeworktopicNumber != ''">
+                and a.homeworktopic_number = #{params.homeworktopicNumber}
+             </if>
+
+                <!-- 判断试卷的id不为空 -->
+            <if test=" params.homeworkIdNotNull != '' and params.homeworkIdNotNull != null and params.homeworkIdNotNull != 'null' ">
+                and a.homework_id IS NOT NULL
+            </if>
+            <if test=" params.homeworkName != '' and params.homeworkName != null and params.homeworkName != 'null' ">
+                and homework.homework_name like CONCAT('%',#{params.homeworkName},'%')
+            </if>
+            <if test="params.homeworkMyscoreStart != null  and params.homeworkMyscoreStart != '' ">
+                <![CDATA[  and homework.homework_myscore >= #{params.homeworkMyscoreStart}   ]]>
+            </if>
+            <if test="params.homeworkMyscoreEnd != null  and params.homeworkMyscoreEnd != '' ">
+                <![CDATA[  and homework.homework_myscore <= #{params.homeworkMyscoreEnd}   ]]>
+            </if>
+            <if test="params.homeworkMyscore != null  and params.homeworkMyscore != '' ">
+                and homework.homework_myscore = #{params.homeworkMyscore}
+            </if>
+
+
+            <if test="params.homeworkTypes != null  and params.homeworkTypes != ''">
+                and homework.homework_types = #{params.homeworkTypes}
+            </if>
+
+            <if test="params.zujuanTypes != null  and params.zujuanTypes != ''">
+                and homework.zujuan_types = #{params.zujuanTypes}
+            </if>
+
+            <if test="params.homeworkDeleteStart != null  and params.homeworkDeleteStart != '' ">
+                <![CDATA[  and homework.homework_delete >= #{params.homeworkDeleteStart}   ]]>
+            </if>
+            <if test="params.homeworkDeleteEnd != null  and params.homeworkDeleteEnd != '' ">
+                <![CDATA[  and homework.homework_delete <= #{params.homeworkDeleteEnd}   ]]>
+            </if>
+            <if test="params.homeworkDelete != null  and params.homeworkDelete != '' ">
+                and homework.homework_delete = #{params.homeworkDelete}
+            </if>
+                <!-- 判断试题表的id不为空 -->
+            <if test=" params.examquestionIdNotNull != '' and params.examquestionIdNotNull != null and params.examquestionIdNotNull != 'null' ">
+                and a.examquestion_id IS NOT NULL
+            </if>
+            <if test=" params.examquestionName != '' and params.examquestionName != null and params.examquestionName != 'null' ">
+                and examquestion.examquestion_name like CONCAT('%',#{params.examquestionName},'%')
+            </if>
+
+
+            <if test=" params.examquestionOptions != '' and params.examquestionOptions != null and params.examquestionOptions != 'null' ">
+                and examquestion.examquestion_options like CONCAT('%',#{params.examquestionOptions},'%')
+            </if>
+            <if test=" params.examquestionAnswer != '' and params.examquestionAnswer != null and params.examquestionAnswer != 'null' ">
+                and examquestion.examquestion_answer like CONCAT('%',#{params.examquestionAnswer},'%')
+            </if>
+            <if test=" params.examquestionAnalysis != '' and params.examquestionAnalysis != null and params.examquestionAnalysis != 'null' ">
+                and examquestion.examquestion_analysis like CONCAT('%',#{params.examquestionAnalysis},'%')
+            </if>
+            <if test="params.examquestionTypes != null  and params.examquestionTypes != ''">
+                and examquestion.examquestion_types = #{params.examquestionTypes}
+            </if>
+
+            <if test="params.examquestionSequenceStart != null  and params.examquestionSequenceStart != '' ">
+                <![CDATA[  and examquestion.examquestion_sequence >= #{params.examquestionSequenceStart}   ]]>
+            </if>
+            <if test="params.examquestionSequenceEnd != null  and params.examquestionSequenceEnd != '' ">
+                <![CDATA[  and examquestion.examquestion_sequence <= #{params.examquestionSequenceEnd}   ]]>
+            </if>
+            <if test="params.examquestionSequence != null  and params.examquestionSequence != '' ">
+                and examquestion.examquestion_sequence = #{params.examquestionSequence}
+            </if>
+        </where>
+        order by a.${params.sort} ${params.order}
+    </select>
+
+</mapper>
