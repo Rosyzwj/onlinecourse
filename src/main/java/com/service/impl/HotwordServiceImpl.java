@@ -14,9 +14,14 @@ import com.service.HotwordService;
 public class HotwordServiceImpl extends ServiceImpl<HotwordDao, HotwordEntity> implements HotwordService {
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
+        EntityWrapper<HotwordEntity> wrapper = new EntityWrapper<>();
+        String word = (String) params.get("word");
+        if (word != null && !word.isEmpty()) {
+            wrapper.like("word", word.replace("%", ""));
+        }
         Page<HotwordEntity> page = this.selectPage(
                 new Query<HotwordEntity>(params).getPage(),
-                new EntityWrapper<HotwordEntity>()
+                wrapper
         );
         return new PageUtils(page);
     }

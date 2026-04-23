@@ -21,7 +21,7 @@
 		</div>
 
 		<!-- 逾期提醒弹窗 -->
-		<el-dialog title="作业逾期提醒" :visible.sync="alertVisible" width="680px" @open="loadAlerts">
+		<el-dialog title="学生异常情况提醒" :visible.sync="alertVisible" width="680px" @open="loadAlerts">
 			<el-table :data="alerts" empty-text="暂无提醒" style="width:100%">
 				<el-table-column prop="studentName" label="学生" width="90"></el-table-column>
 				<el-table-column prop="courseName" label="课程" width="150"></el-table-column>

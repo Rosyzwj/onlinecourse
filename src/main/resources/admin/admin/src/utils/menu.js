@@ -190,6 +190,25 @@ const menu = {
             ],
             menu: "系统管理",
           },
+          {
+            child: [
+              {
+                appFrontIcon: "cuIcon-tag",
+                buttons: ["新增", "查看", "修改", "删除"],
+                menu: "热词管理",
+                menuJump: "列表",
+                tableName: "hotword",
+              },
+              {
+                appFrontIcon: "cuIcon-chart",
+                buttons: ["查看"],
+                menu: "热词统计",
+                menuJump: "统计",
+                tableName: "hotword-statistics",
+              },
+            ],
+            menu: "热词管理",
+          },
         ],
         frontMenu: [
           {

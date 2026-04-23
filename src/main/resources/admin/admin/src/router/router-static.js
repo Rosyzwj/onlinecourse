@@ -41,6 +41,8 @@ import examrewrongquestion from '@/views/modules/examrewrongquestion/list';
 import examrewrongquestionStatistics from '@/views/modules/examrewrongquestion/statistics';
 import pointsstrategy from '@/views/modules/pointsstrategy/list';
 import knowledgemapManage from '@/views/modules/knowledgemap/manage';
+import hotword from '@/views/modules/hotword/list';
+import hotwordStatistics from '@/views/modules/hotword/statistics';
 
 //2.配置路由   注意：名字
 const routes = [
@@ -214,6 +216,16 @@ const routes = [
         path: '/knowledgemap-manage',
         name: '知识地图维护',
         component: knowledgemapManage
+      },
+      {
+        path: '/hotword',
+        name: '热词管理',
+        component: hotword
+      },
+      {
+        path: '/hotword-statistics',
+        name: '热词统计',
+        component: hotwordStatistics
       }
     ],
   },

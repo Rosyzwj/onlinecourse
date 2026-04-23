@@ -33,5 +33,9 @@ export default {
             name: '知识地图',
             url: '/index/knowledgeMap'
         },
+        {
+            name: '热词专区',
+            url: '/index/knowledgeHotword'
+        },
     ]
 }
