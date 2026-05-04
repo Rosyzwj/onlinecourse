@@ -276,55 +276,59 @@ export default {
 				console.error('加载聊天历史失败', err);
 			});
 		},
-		// 发送消息
+		// 发送消息（SSE 流式接收，实现打字机效果）
 		sendMessage() {
 			if (!this.question.trim()) {
 				this.$message.warning('请输入问题');
 				return;
 			}
-			
 			if (!this.Token) {
 				this.$message.warning('请先登录');
 				this.toLogin();
 				return;
 			}
-			
+
 			// 添加用户消息到界面
-			this.messages.push({
-				content: this.question,
-				isUser: true
-			});
-			
-			// 清空输入框
+			this.messages.push({ content: this.question, isUser: true });
+
 			const questionText = this.question;
 			this.question = '';
 			this.isLoading = true;
-			
-			// 滚动到底部
 			this.scrollToBottom();
-			
-			// 调用AI接口
-			this.$http.get('chat/aichat', {
-				params: {
-					question: questionText
-				}
-			}).then(res => {
-				this.isLoading = false;
-				if (res.data.code === 0) {
-					// 添加AI回复
-					this.messages.push({
-						content: res.data.answer,
-						isUser: false
-					});
-				} else {
-					this.$message.error(res.data.msg || '获取回答失败');
-				}
-				// 滚动到底部
+
+			// 先占位一条空的 AI 消息，后续逐字追加
+			const aiMsgIndex = this.messages.length;
+			this.messages.push({ content: '', isUser: false });
+
+			const baseUrl = this.$config.baseUrl;
+			const token = localStorage.getItem('Token');
+			const url = `${baseUrl}chat/aichat/stream?question=${encodeURIComponent(questionText)}&Token=${encodeURIComponent(token)}`;
+
+			const es = new EventSource(url);
+
+			es.addEventListener('message', (e) => {
+				// 逐字追加到 AI 消息气泡
+				this.$set(this.messages, aiMsgIndex, {
+					content: this.messages[aiMsgIndex].content + e.data,
+					isUser: false
+				});
 				this.scrollToBottom();
-			}).catch(err => {
+			});
+
+			es.addEventListener('done', () => {
+				es.close();
 				this.isLoading = false;
-				console.error('AI问答请求失败', err);
-				this.$message.error('AI问答服务异常，请稍后再试');
+				this.scrollToBottom();
+			});
+
+			es.addEventListener('error', (e) => {
+				es.close();
+				this.isLoading = false;
+				// 如果 AI 消息为空说明连接就失败了
+				if (!this.messages[aiMsgIndex].content) {
+					this.messages.splice(aiMsgIndex, 1);
+					this.$message.error('AI问答服务异常，请稍后再试');
+				}
 			});
 		},
 		// 滚动到最新消息

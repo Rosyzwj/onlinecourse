@@ -46,6 +46,14 @@ public class HomeworkAlertEntity implements Serializable {
     @TableField(value = "create_time")
     private Date createTime;
 
+    /** 预警等级(0=逾期触发旧逻辑,1=关注,2=预警,3=危险) */
+    @TableField(value = "alert_level")
+    private Integer alertLevel;
+
+    /** 风险评分(0-100) */
+    @TableField(value = "risk_score")
+    private Integer riskScore;
+
     // ---- 非数据库字段，用于前端展示 ----
     @TableField(exist = false)
     private String studentName;
@@ -73,6 +81,12 @@ public class HomeworkAlertEntity implements Serializable {
 
     public Date getCreateTime() { return createTime; }
     public void setCreateTime(Date createTime) { this.createTime = createTime; }
+
+    public Integer getAlertLevel() { return alertLevel; }
+    public void setAlertLevel(Integer alertLevel) { this.alertLevel = alertLevel; }
+
+    public Integer getRiskScore() { return riskScore; }
+    public void setRiskScore(Integer riskScore) { this.riskScore = riskScore; }
 
     public String getStudentName() { return studentName; }
     public void setStudentName(String studentName) { this.studentName = studentName; }

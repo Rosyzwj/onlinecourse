@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 作业逾期提醒 服务实现类
@@ -34,5 +35,15 @@ public class HomeworkAlertServiceImpl extends ServiceImpl<HomeworkAlertDao, Home
     @Override
     public boolean hasUnreadAlert(Long studentId, Integer courseId) {
         return baseMapper.countUnreadAlert(studentId, courseId) > 0;
+    }
+
+    @Override
+    public List<Long> getStudentIdsByCourse(Integer courseId) {
+        return baseMapper.selectStudentIdsByCourse(courseId);
+    }
+
+    @Override
+    public List<Map<String, Object>> getHomeworkStats(Long studentId, Integer courseId) {
+        return baseMapper.selectHomeworkStats(studentId, courseId);
     }
 }

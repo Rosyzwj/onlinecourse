@@ -12,14 +12,19 @@ import com.utils.PageUtils;
 import com.utils.R;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -149,47 +154,130 @@ public class ChatController {
 
 
 	/**
-	 * AI问答接口
-	 * 接收用户问题，调用AI工具获取回答，并保存对话记录
+	 * AI问答接口（带历史上下文，同步返回）
 	 */
 	@RequestMapping("/aichat")
 	public R aichat(@RequestParam String question, HttpServletRequest request) {
 		try {
-			// 验证参数
 			if (StringUtils.isBlank(question)) {
 				return R.error("问题不能为空");
 			}
-
-			// 获取当前用户ID
 			Long userId = (Long) request.getSession().getAttribute("userId");
 			if (userId == null) {
 				return R.error("请先登录");
 			}
 
-			// 调用AI工具获取回答
-			String answer = AIUitl.getResponse(question);
+			// 查询该用户最近 5 条历史记录作为上下文
+			List<AIUitl.HistoryMessage> history = getRecentHistory(userId, 5);
 
-			// 保存对话记录到数据库
+			String answer = AIUitl.getResponseWithHistory(history, question);
+
 			ChatEntity chat = new ChatEntity();
 			chat.setId(new Date().getTime() + new Double(Math.floor(Math.random() * 1000)).longValue());
 			chat.setUserid(userId);
 			chat.setAdminid(1L);
 			chat.setAsk(question);
 			chat.setReply(answer);
-			chat.setIsreply(1); // 标记为已回复
+			chat.setIsreply(1);
 			chat.setAddtime(new Date());
 			chatService.insert(chat);
 
-			// 返回结果
 			return R.ok()
 					.put("question", question)
 					.put("answer", answer)
 					.put("chatId", chat.getId());
 		} catch (Exception e) {
-			// 处理异常
 			e.printStackTrace();
 			return R.error("AI问答服务异常：" + e.getMessage());
 		}
+	}
+
+	/**
+	 * AI问答流式接口（SSE），逐字推送 AI 回答
+	 * 前端通过 EventSource 接收，实现打字机效果
+	 */
+	@GetMapping(value = "/aichat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public SseEmitter aichatStream(@RequestParam String question, HttpServletRequest request) {
+		Long userId = (Long) request.getSession().getAttribute("userId");
+
+		// SseEmitter 超时设置为 3 分钟
+		SseEmitter emitter = new SseEmitter(180_000L);
+
+		if (StringUtils.isBlank(question)) {
+			try {
+				emitter.send(SseEmitter.event().name("error").data("问题不能为空"));
+				emitter.complete();
+			} catch (IOException ignored) {}
+			return emitter;
+		}
+		if (userId == null) {
+			try {
+				emitter.send(SseEmitter.event().name("error").data("请先登录"));
+				emitter.complete();
+			} catch (IOException ignored) {}
+			return emitter;
+		}
+
+		List<AIUitl.HistoryMessage> history = getRecentHistory(userId, 5);
+		final Long finalUserId = userId;
+		final StringBuilder fullAnswer = new StringBuilder();
+
+		// 在新线程中执行流式调用，避免阻塞 Servlet 线程
+		Thread thread = new Thread(() -> {
+			try {
+				AIUitl.streamResponseWithHistory(history, question, text -> {
+					try {
+						fullAnswer.append(text);
+						emitter.send(SseEmitter.event().name("message").data(text));
+					} catch (IOException e) {
+						emitter.completeWithError(e);
+					}
+				});
+
+				// 流结束后保存完整对话到数据库
+				ChatEntity chat = new ChatEntity();
+				chat.setId(new Date().getTime() + new Double(Math.floor(Math.random() * 1000)).longValue());
+				chat.setUserid(finalUserId);
+				chat.setAdminid(1L);
+				chat.setAsk(question);
+				chat.setReply(fullAnswer.toString());
+				chat.setIsreply(1);
+				chat.setAddtime(new Date());
+				chatService.insert(chat);
+
+				// 发送结束事件，携带 chatId 供前端使用
+				emitter.send(SseEmitter.event().name("done").data(chat.getId()));
+				emitter.complete();
+			} catch (Exception e) {
+				try {
+					emitter.send(SseEmitter.event().name("error").data("AI问答服务异常：" + e.getMessage()));
+				} catch (IOException ignored) {}
+				emitter.completeWithError(e);
+			}
+		});
+		thread.setDaemon(true);
+		thread.start();
+
+		return emitter;
+	}
+
+	/**
+	 * 查询指定用户最近 N 条已回复的历史记录，用于构建上下文
+	 */
+	private List<AIUitl.HistoryMessage> getRecentHistory(Long userId, int limit) {
+		EntityWrapper<ChatEntity> ew = new EntityWrapper<>();
+		ew.eq("userid", userId).eq("isreply", 1).orderBy("addtime", false);
+		List<ChatEntity> records = chatService.selectList(ew);
+
+		// 取最近 limit 条，并按时间正序排列（旧 → 新）
+		int start = Math.max(0, records.size() - limit);
+		List<ChatEntity> recent = records.subList(start, records.size());
+
+		List<AIUitl.HistoryMessage> history = new ArrayList<>();
+		for (ChatEntity r : recent) {
+			history.add(new AIUitl.HistoryMessage(r.getAsk(), r.getReply()));
+		}
+		return history;
 	}
 	/**
 	 * 修改

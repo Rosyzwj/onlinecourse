@@ -154,6 +154,20 @@
 			<artifactId>volcengine-java-sdk-ark-runtime</artifactId>
 			<version>0.2.34</version>
 		</dependency>
+
+		<!-- HanLP 自然语言处理（TF-IDF 关键词提取） -->
+		<dependency>
+			<groupId>com.hankcs</groupId>
+			<artifactId>hanlp</artifactId>
+			<version>portable-1.8.4</version>
+		</dependency>
+
+		<!-- Jsoup HTML 富文本清洗 -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.17.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>

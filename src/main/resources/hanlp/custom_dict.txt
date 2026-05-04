@@ -1,0 +1,75 @@
+# HanLP 用户自定义词典
+# 格式：词条 词频 词性
+# 词频越高，分词时越优先识别为整体
+
+# ===== Java / 后端技术栈 =====
+Spring Boot 100 nz
+Spring Cloud 100 nz
+Spring MVC 100 nz
+Spring Security 100 nz
+Spring Framework 80 nz
+MyBatis-Plus 100 nz
+MyBatis Plus 100 nz
+MyBatis 80 nz
+Spring Data JPA 80 nz
+Hibernate 60 nz
+
+# ===== 数据库 =====
+MySQL 80 nz
+Redis 80 nz
+MongoDB 80 nz
+Elasticsearch 80 nz
+PostgreSQL 60 nz
+
+# ===== 前端技术栈 =====
+Vue.js 80 nz
+Vue 60 nz
+React 60 nz
+Element UI 80 nz
+Node.js 80 nz
+TypeScript 60 nz
+JavaScript 60 nz
+Webpack 60 nz
+
+# ===== 算法与数据结构 =====
+动态规划 100 nz
+数据结构 100 nz
+LeetCode 100 nz
+二叉树 80 nz
+状态转移 80 nz
+时间复杂度 80 nz
+空间复杂度 80 nz
+贪心算法 80 nz
+回溯算法 80 nz
+深度优先 80 nz
+广度优先 80 nz
+
+# ===== 并发与多线程 =====
+多线程 100 nz
+并发编程 100 nz
+线程池 80 nz
+悲观锁 80 nz
+乐观锁 80 nz
+分布式锁 80 nz
+死锁 60 nz
+CAS 60 nz
+AQS 60 nz
+volatile 60 nz
+synchronized 60 nz
+
+# ===== 系统设计 =====
+微服务 80 nz
+分布式 80 nz
+负载均衡 80 nz
+消息队列 80 nz
+RabbitMQ 80 nz
+Kafka 80 nz
+Docker 60 nz
+Kubernetes 60 nz
+CI/CD 60 nz
+
+# ===== 学习与面试 =====
+面试题 80 nz
+学习资料 60 nz
+实战经验 60 nz
+避坑指南 60 nz

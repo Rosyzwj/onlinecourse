@@ -55,8 +55,11 @@ public class AuthorizationInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        //从header中获取token
+        // 从 header 获取 token；SSE 等无法设置 header 的场景允许从 query param 传入
         String token = request.getHeader(LOGIN_TOKEN_KEY);
+        if (StringUtils.isBlank(token)) {
+            token = request.getParameter(LOGIN_TOKEN_KEY);
+        }
         
         /**
          * 不需要验证权限的方法直接放过

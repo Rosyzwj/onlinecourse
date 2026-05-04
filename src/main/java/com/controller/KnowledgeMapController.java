@@ -268,47 +268,104 @@ public class KnowledgeMapController {
     }
 
     /**
-     * 算法升级：全面点亮技能树（收集所有前置依赖节点）
+     * 算法升级：Kahn算法（拓扑排序）生成科学学习路径
+     * 相比原 Reverse-DFS 的改进：
+     * 1. 严格保证输出的线性序列满足拓扑序（每个节点一定在其所有前置节点之后出现）
+     * 2. 一次性批量查询所有节点和边，消除 N+1 查询问题
+     * 3. 自动检测知识图谱中的环（有环时返回错误提示，而非静默跳过）
+     * 算法步骤（Kahn's Algorithm）：
+     * Step 1. Reverse-DFS 收集目标节点的所有前置节点 ID 集合
+     * Step 2. 批量查出这些节点的实体和它们之间的边
+     * Step 3. 在内存中构建 DAG，计算每个节点的入度
+     * Step 4. 将入度为 0 的节点（最基础，无前置要求）入队
+     * Step 5. BFS：出队 → 加入结果 → 更新邻居入度 → 入度变 0 则入队
+     * Step 6. 若结果数 < 节点总数，说明存在环，返回错误
      */
     @RequestMapping("/generatePath/{pointId}")
     public R generatePath(@PathVariable("pointId") Long pointId) {
-        // 使用 Set 自动去重，存储所有必须掌握的前置节点
-        Set<KnowledgePointEntity> allRequiredNodes = new LinkedHashSet<>();
-        Set<Long> visited = new HashSet<>(); // 防止死循环
+        // Step 1: 用 DFS 收集所有相关节点的 ID（含目标节点自身）
+        Set<Long> relatedIds = new HashSet<>();
+        collectRelatedIds(pointId, relatedIds);
 
-        // 递归收集所有前置节点
-        getAllPreRequisites(pointId, allRequiredNodes, visited);
+        if (relatedIds.isEmpty()) {
+            return R.error("未找到该知识点");
+        }
 
-        // 转换成前端需要的 List 格式，反转使顺序为"最基础→...→目标节点"
-        List<KnowledgePointEntity> resultList = new ArrayList<>(allRequiredNodes);
-        Collections.reverse(resultList);
+        // Step 2: 批量查询节点实体和子图内的所有边（两次 DB 查询，替代原来的 N 次）
+        List<KnowledgePointEntity> allPoints = knowledgePointService.selectList(
+                new EntityWrapper<KnowledgePointEntity>().in("id", new ArrayList<>(relatedIds))
+        );
+        List<KnowledgeRelationEntity> allEdges = knowledgeRelationDao.selectList(
+                new EntityWrapper<KnowledgeRelationEntity>()
+                        .in("from_point_id", new ArrayList<>(relatedIds))
+                        .in("to_point_id", new ArrayList<>(relatedIds))
+        );
 
-        // 如果想按某种逻辑排序（可选），目前 LinkedHashSet 已尽量保持插入顺序
-        return R.ok().put("data", resultList);
+        // Step 3: 构建 DAG —— 邻接表 + 入度表
+        // 边方向：fromPointId → toPointId，表示”学完 from 才能学 to”
+        Map<Long, KnowledgePointEntity> pointMap = new HashMap<>();
+        Map<Long, Integer> inDegree = new HashMap<>();
+        Map<Long, List<Long>> adjList = new HashMap<>();  // from → [to, to, ...]
+
+        for (KnowledgePointEntity point : allPoints) {
+            pointMap.put(point.getId(), point);
+            inDegree.put(point.getId(), 0);
+            adjList.put(point.getId(), new ArrayList<>());
+        }
+        for (KnowledgeRelationEntity edge : allEdges) {
+            Long from = edge.getFromPointId();
+            Long to = edge.getToPointId();
+            // 只处理子图内部的边
+            if (inDegree.containsKey(from) && inDegree.containsKey(to)) {
+                adjList.get(from).add(to);
+                inDegree.put(to, inDegree.get(to) + 1);
+            }
+        }
+
+        // Step 4: 将所有入度为 0 的节点（最基础节点）加入队列
+        Queue<Long> queue = new LinkedList<>();
+        for (Map.Entry<Long, Integer> entry : inDegree.entrySet()) {
+            if (entry.getValue() == 0) {
+                queue.offer(entry.getKey());
+            }
+        }
+
+        // Step 5: BFS 拓扑排序
+        List<KnowledgePointEntity> sortedPath = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            Long currentId = queue.poll();
+            sortedPath.add(pointMap.get(currentId));
+            // 移除当前节点的出边，更新邻居入度
+            for (Long neighborId : adjList.get(currentId)) {
+                int newDegree = inDegree.get(neighborId) - 1;
+                inDegree.put(neighborId, newDegree);
+                if (newDegree == 0) {
+                    queue.offer(neighborId);
+                }
+            }
+        }
+
+        // Step 6: 环检测 —— 若排序结果数量 < 节点总数，说明图中存在环
+        if (sortedPath.size() < allPoints.size()) {
+            return R.error("知识图谱中存在循环依赖，无法生成学习路径，请检查知识点关系配置");
+        }
+
+        return R.ok().put("data", sortedPath);
     }
 
     /**
-     * 递归遍历：获取指定节点的所有“长辈、祖先”节点
+     * Reverse-DFS：从目标节点出发，沿反向边递归收集所有前置节点 ID
+     * 仅收集 ID，不查实体，为 Kahn 算法的 Step 1 服务
      */
-    private void getAllPreRequisites(Long currentId, Set<KnowledgePointEntity> allRequiredNodes, Set<Long> visited) {
+    private void collectRelatedIds(Long currentId, Set<Long> visited) {
         if (visited.contains(currentId)) return;
         visited.add(currentId);
 
-        // 1. 把当前节点自己加进集合
-        KnowledgePointEntity currentPoint = knowledgePointService.selectById(currentId);
-        if (currentPoint != null) {
-            allRequiredNodes.add(currentPoint);
-        }
-
-        // 2. 查出谁指向了当前节点（找”爸爸”），所有关系类型都算前置依赖
         List<KnowledgeRelationEntity> relations = knowledgeRelationDao.selectList(
-                new EntityWrapper<KnowledgeRelationEntity>()
-                        .eq("to_point_id", currentId)
+                new EntityWrapper<KnowledgeRelationEntity>().eq("to_point_id", currentId)
         );
-
-        // 3. 对所有的“爸爸”进行递归，去找“爷爷”、“太爷爷”
         for (KnowledgeRelationEntity rel : relations) {
-            getAllPreRequisites(rel.getFromPointId(), allRequiredNodes, visited);
+            collectRelatedIds(rel.getFromPointId(), visited);
         }
     }
 }

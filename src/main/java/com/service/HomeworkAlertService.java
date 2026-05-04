@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.service.IService;
 import com.entity.HomeworkAlertEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 作业逾期提醒 服务接口
@@ -21,4 +22,10 @@ public interface HomeworkAlertService extends IService<HomeworkAlertEntity> {
 
     /** 是否已有未读提醒（防重复插入） */
     boolean hasUnreadAlert(Long studentId, Integer courseId);
+
+    /** 查询某课程下所有选课学生ID */
+    List<Long> getStudentIdsByCourse(Integer courseId);
+
+    /** 查询某学生在某课程下的作业统计（用于风险计算） */
+    List<Map<String, Object>> getHomeworkStats(Long studentId, Integer courseId);
 }

@@ -5,6 +5,7 @@ import com.entity.HomeworkAlertEntity;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 作业逾期提醒 Dao 接口
@@ -30,4 +31,12 @@ public interface HomeworkAlertDao extends BaseMapper<HomeworkAlertEntity> {
      * 查询该学生在该课程是否已有未读提醒（防重复）
      */
     int countUnreadAlert(@Param("studentId") Long studentId, @Param("courseId") Integer courseId);
+
+    /** 查询某课程下所有选课学生ID */
+    List<Long> selectStudentIdsByCourse(@Param("courseId") Integer courseId);
+
+    /** 查询某学生在某课程下的作业统计（用于风险计算） */
+    List<Map<String, Object>> selectHomeworkStats(
+            @Param("studentId") Long studentId,
+            @Param("courseId") Integer courseId);
 }

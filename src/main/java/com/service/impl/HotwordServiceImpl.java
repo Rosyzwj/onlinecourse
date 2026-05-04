@@ -25,5 +25,12 @@ public class HotwordServiceImpl extends ServiceImpl<HotwordDao, HotwordEntity> i
         );
         return new PageUtils(page);
     }
+
+    @Override
+    public HotwordEntity getByWord(String word) {
+        return this.selectOne(
+            new EntityWrapper<HotwordEntity>().eq("word", word)
+        );
+    }
 }
 

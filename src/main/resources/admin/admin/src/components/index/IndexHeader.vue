@@ -21,12 +21,31 @@
 		</div>
 
 		<!-- 逾期提醒弹窗 -->
-		<el-dialog title="学生异常情况提醒" :visible.sync="alertVisible" width="680px" @open="loadAlerts">
+		<el-dialog title="学生异常情况提醒" :visible.sync="alertVisible" width="860px" @open="loadAlerts">
 			<el-table :data="alerts" empty-text="暂无提醒" style="width:100%">
 				<el-table-column prop="studentName" label="学生" width="90"></el-table-column>
 				<el-table-column prop="courseName" label="课程" width="150"></el-table-column>
 				<el-table-column prop="alertMessage" label="提醒内容"></el-table-column>
 				<el-table-column prop="createTime" label="时间" width="155"></el-table-column>
+				<el-table-column label="预警等级" width="80">
+					<template slot-scope="scope">
+						<el-tag v-if="scope.row.alertLevel===3" type="danger" size="mini">危险</el-tag>
+						<el-tag v-else-if="scope.row.alertLevel===2" size="mini"
+							style="background:#FF8C00;color:#fff;border:none;">预警</el-tag>
+						<el-tag v-else-if="scope.row.alertLevel===1" type="warning" size="mini">关注</el-tag>
+						<el-tag v-else type="info" size="mini">逾期</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column label="风险分" width="65">
+					<template slot-scope="scope">
+						<span :style="{
+							color: scope.row.riskScore>80?'#e74c3c'
+								 : scope.row.riskScore>60?'#FF8C00'
+								 : scope.row.riskScore>30?'#e6a817':'#67c23a',
+							fontWeight:'bold'
+						}">{{scope.row.riskScore || 0}}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="状态" width="70">
 					<template slot-scope="scope">
 						<el-tag v-if="scope.row.isRead===0" type="danger" size="mini">未读</el-tag>

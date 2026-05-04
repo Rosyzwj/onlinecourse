@@ -3,6 +3,8 @@ package com.service.impl;
 import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.List;
+import java.util.Date;
+import java.util.Calendar;
 
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
@@ -59,5 +61,15 @@ public class ForumServiceImpl extends ServiceImpl<ForumDao, ForumEntity> impleme
 		return baseMapper.selectView(wrapper);
 	}
 
+	@Override
+	public List<ForumEntity> getRecentPosts(int days) {
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DAY_OF_YEAR, -days);
+		Date since = cal.getTime();
+		return this.selectList(
+			new EntityWrapper<ForumEntity>()
+				.ge("addtime", since)
+		);
+	}
 
 }

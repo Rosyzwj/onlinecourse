@@ -12,6 +12,8 @@
             a.alert_message   AS alertMessage,
             a.is_read         AS isRead,
             a.create_time     AS createTime,
+            a.alert_level     AS alertLevel,
+            a.risk_score      AS riskScore,
             s.name            AS studentName,
             c.coursename      AS courseName
         FROM homework_alert a
@@ -46,6 +48,32 @@
         WHERE student_id = #{studentId}
           AND course_id  = #{courseId}
           AND is_read    = 0
+    </select>
+
+    <!-- 查询某课程下所有选课学生ID（来自 selection 表） -->
+    <select id="selectStudentIdsByCourse" resultType="java.lang.Long">
+        SELECT DISTINCT userId
+        FROM selection
+        WHERE courseId = #{courseId}
+    </select>
+
+    <!-- 查询某学生在某课程下的作业统计 -->
+    <select id="selectHomeworkStats" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(*) FROM homework WHERE course_id = #{courseId}) AS totalHomework,
+            COUNT(hr.id)                                                   AS submittedCount,
+            SUM(CASE WHEN hr.is_overdue = 1 THEN 1 ELSE 0 END)           AS overdueCount,
+            MAX(CASE WHEN rn = 1 THEN hr.total_score END)                 AS score1,
+            MAX(CASE WHEN rn = 2 THEN hr.total_score END)                 AS score2,
+            MAX(CASE WHEN rn = 3 THEN hr.total_score END)                 AS score3
+        FROM (
+            SELECT hr2.id, hr2.total_score, hr2.is_overdue,
+                   ROW_NUMBER() OVER (ORDER BY hr2.insert_time DESC) AS rn
+            FROM homeworkrecord hr2
+            JOIN homework h ON hr2.homework_id = h.id
+            WHERE hr2.yonghu_id = #{studentId}
+              AND h.course_id   = #{courseId}
+        ) hr
     </select>
 
 </mapper>

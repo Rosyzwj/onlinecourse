@@ -31,7 +31,11 @@ public interface ForumService extends IService<ForumEntity> {
    	ForumView selectView(@Param("ew") Wrapper<ForumEntity> wrapper);
    	
    	PageUtils queryPage(Map<String, Object> params,Wrapper<ForumEntity> wrapper);
-   	
+
+    /**
+     * 获取近 n 天内发布的帖子列表（用于热词挖掘定时任务）
+     */
+    List<ForumEntity> getRecentPosts(int days);
 
 }
 

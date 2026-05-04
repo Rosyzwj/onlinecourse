@@ -5,7 +5,7 @@
       <div class="content-title">{{detail.title}}</div>
       <div class="content-sub-title">发布人：{{detail.username}}&nbsp;&nbsp;&nbsp;发布时间：{{detail.addtime}}</div>
       <el-divider></el-divider>
-      <div class="content-detail" v-html="detail.content"></div>
+      <div class="content-detail" v-html="decodedContent"></div>
       <el-card class="box-card" :style='{"marginTop":"20px","borderRadius":"8px","border":"1px solid #e0e6ed","transition":"all 0.3s ease"}'>
         <div slot="header" class="clearfix">
           <span style="height: 40px;line-height: 40px;color: #666666;font-size: 18px;font-weight: 500;">评论列表</span>
@@ -59,6 +59,16 @@
             { required: true, message: '请输入评论', trigger: 'blur' }
           ]
         }
+      }
+    },
+    computed: {
+      // 对帖子内容做 HTML 实体解码，确保 v-html 能正确渲染富文本
+      decodedContent() {
+        const raw = this.detail.content;
+        if (!raw) return '';
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = raw;
+        return textarea.value;
       }
     },
     created() {
