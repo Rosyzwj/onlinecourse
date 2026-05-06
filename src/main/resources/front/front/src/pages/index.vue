@@ -72,7 +72,7 @@
 							<img :src="aiAvatar" :style='{"width":"40px","height":"40px","borderRadius":"50%","marginRight":"10px","objectFit":"cover","alignSelf":"flex-start"}' alt="智能AI头像">
 							<div>
 								<div :style='{"fontSize":"12px","color":"#666","marginBottom":"5px"}'>智能AI</div>
-								<div :style='{"background":"#ffffff","padding":"10px 15px","borderRadius":"18px 18px 18px 0","boxShadow":"0 1px 3px rgba(0,0,0,0.1)","wordBreak":"break-all"}'>{{msg.content}}</div>
+								<div class="markdown-body" :style='{"background":"#ffffff","padding":"10px 15px","borderRadius":"18px 18px 18px 0","boxShadow":"0 1px 3px rgba(0,0,0,0.1)","wordBreak":"break-word"}' v-html="renderMarkdown(msg.content)"></div>
 							</div>
 						</div>
 						
@@ -122,6 +122,24 @@
 
 <script>
 import Vue from 'vue'
+import { marked } from 'marked'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
+
+// Configure marked with syntax highlighting
+marked.setOptions({
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value
+        }
+        return hljs.highlightAuto(code).value
+    },
+    breaks: true,
+    gfm: true
+})
+
 export default {
     data() {
 		return {
@@ -331,6 +349,27 @@ export default {
 				}
 			});
 		},
+		// Render markdown with code highlighting and math formula support
+		renderMarkdown(content) {
+			if (!content) return ''
+			// Replace block math $$...$$ before marked processes it
+			let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+				try {
+					return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false })
+				} catch (e) {
+					return match
+				}
+			})
+			// Replace inline math $...$
+			processed = processed.replace(/(?<!\$)\$([^$\n]+?)\$(?!\$)/g, (match, formula) => {
+				try {
+					return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false })
+				} catch (e) {
+					return match
+				}
+			})
+			return marked(processed)
+		},
 		// 滚动到最新消息
 		scrollToBottom() {
 			this.$nextTick(() => {
@@ -534,6 +573,97 @@ export default {
     
     ::v-deep .chat-messages::-webkit-scrollbar-thumb:hover {
         background: #aaa;
+    }
+
+    /* Markdown rendered content styles */
+    ::v-deep .markdown-body {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #333;
+
+        h1, h2, h3, h4, h5, h6 {
+            margin: 8px 0 4px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        h1 { font-size: 1.4em; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        h2 { font-size: 1.25em; border-bottom: 1px solid #eee; padding-bottom: 3px; }
+        h3 { font-size: 1.1em; }
+
+        p { margin: 4px 0; }
+
+        ul, ol {
+            padding-left: 20px;
+            margin: 4px 0;
+        }
+
+        li { margin: 2px 0; }
+
+        code {
+            background: #f0f0f0;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #c7254e;
+        }
+
+        pre {
+            background: #282c34;
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 8px 0;
+
+            code {
+                background: none;
+                color: #abb2bf;
+                padding: 0;
+                font-size: 0.88em;
+            }
+        }
+
+        blockquote {
+            border-left: 3px solid #3498db;
+            margin: 6px 0;
+            padding: 4px 12px;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 0 4px 4px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 0.9em;
+
+            th, td {
+                border: 1px solid #ddd;
+                padding: 6px 10px;
+                text-align: left;
+            }
+            th { background: #f0f4f8; font-weight: 600; }
+            tr:nth-child(even) { background: #f9f9f9; }
+        }
+
+        a {
+            color: #3498db;
+            text-decoration: none;
+            &:hover { text-decoration: underline; }
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 8px 0;
+        }
+
+        /* KaTeX display math centering */
+        .katex-display {
+            overflow-x: auto;
+            margin: 8px 0;
+        }
     }
 </style>
     

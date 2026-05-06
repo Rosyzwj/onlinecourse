@@ -1,7 +1,7 @@
 <template>
   <div style="padding:30px;">
     <div style="font-size:20px;font-weight:600;color:#333;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #3498db;">
-      热词点击统计
+      热词统计
     </div>
 
     <!-- 汇总卡片 -->
@@ -15,7 +15,7 @@
       <el-col :span="6">
         <el-card shadow="never" style="text-align:center;">
           <div style="font-size:32px;font-weight:700;color:#e74c3c;">{{ totalClicks }}</div>
-          <div style="color:#999;margin-top:6px;">总点击次数</div>
+          <div style="color:#999;margin-top:6px;">总热度</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -27,7 +27,7 @@
       <el-col :span="6">
         <el-card shadow="never" style="text-align:center;">
           <div style="font-size:32px;font-weight:700;color:#f39c12;">{{ avgClicks }}</div>
-          <div style="color:#999;margin-top:6px;">平均点击次数</div>
+          <div style="color:#999;margin-top:6px;">平均热度</div>
         </el-card>
       </el-col>
     </el-row>

@@ -11,9 +11,9 @@ import java.util.Date;
 @TableName("selection")
 public class SelectionEntity {
     @TableId(type = IdType.AUTO)
-    private long id;
-    private long userId;
-    private long courseId;
+    private Long id;
+    private Long userId;
+    private Long courseId;
     private Date enrollTime;
     private Double progress;
     private Date lastLearnTime;

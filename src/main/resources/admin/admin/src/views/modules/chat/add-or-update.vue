@@ -8,7 +8,7 @@
               <el-input v-model="formData.username" disabled></el-input>
             </el-form-item>
             <el-form-item label="课程名称">
-              <el-input v-model="formData.kechengName" disabled></el-input>
+              <el-input v-model="formData.courseName" disabled></el-input>
             </el-form-item>
             <el-form-item label="申请时间">
               <el-input v-model="formData.applyTime" disabled></el-input>

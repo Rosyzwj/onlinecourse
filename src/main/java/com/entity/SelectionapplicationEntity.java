@@ -3,19 +3,20 @@ package com.entity;
 import com.baomidou.mybatisplus.enums.IdType;
 import com.baomidou.mybatisplus.annotations.TableId;
 import com.baomidou.mybatisplus.annotations.TableName;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
 
-@Data
 @TableName("selectionapplication")
 public class SelectionapplicationEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
     private Long courseId;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date applyTime;
     private Integer status;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date reviewTime;
     private Integer reviewerId;
     private String reviewRemark;

@@ -1,11 +1,8 @@
 package com.entity.view;
 
 import com.entity.SelectionapplicationEntity;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.Date;
 
 /**
  * 选课申请视图实体类
@@ -33,16 +30,4 @@ public class SelectionapplicationView extends SelectionapplicationEntity {
      * 申请状态文本
      */
     private String statusText;
-
-    /**
-     * 格式化后的申请时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date applyTime;
-
-    /**
-     * 格式化后的审核时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date reviewTime;
 }

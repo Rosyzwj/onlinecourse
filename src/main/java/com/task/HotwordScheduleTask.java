@@ -133,8 +133,8 @@ public class HotwordScheduleTask {
      * 每天凌晨 2:00 触发。
      * cron 表达式：秒 分 时 日 月 周
      */
-    @Scheduled(cron = "0 */1 * * * ?") // 每隔1分钟执行一次，仅用于测试
-//    @Scheduled(cron = "0 0 2 * * ?")
+//    @Scheduled(cron = "0 */1 * * * ?") // 每隔1分钟执行一次，仅用于测试
+    @Scheduled(cron = "0 0 2 * * ?")
     public void mineHotwords() {
         log.info("[热词挖掘] 定时任务开始执行...");
 

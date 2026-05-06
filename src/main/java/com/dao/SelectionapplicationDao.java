@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.mapper.BaseMapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.entity.SelectionapplicationEntity;
-import com.entity.UsersEntity;
 import com.entity.view.SelectionapplicationView;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -18,7 +17,7 @@ public interface SelectionapplicationDao extends BaseMapper<Selectionapplication
      */
     List<SelectionapplicationView> selectListView(@Param("ew") Wrapper<SelectionapplicationEntity> wrapper);
 
-    List<SelectionapplicationView> selectListView(Pagination page, @Param("ew") Wrapper<UsersEntity> wrapper);
+    List<SelectionapplicationView> selectListView(Pagination page, @Param("ew") Wrapper<SelectionapplicationEntity> wrapper);
 
     /**
      * 查询单个选课申请视图

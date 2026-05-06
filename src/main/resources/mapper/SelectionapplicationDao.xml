@@ -35,19 +35,19 @@
             </if>
         </where>
     </select>
-    <!-- 查询选课申请视图列表 -->
+    <!-- 查询选课申请视图列表（带分页） -->
     <select id="selectListView" resultType="com.entity.view.SelectionapplicationView">
         SELECT
             sq.*,
             u.name AS username,
-            k.coursename AS courseName,
-            r.username AS reviewerName,
+            k.coursename AS course_name,
+            r.username AS reviewer_name,
             CASE
                 WHEN sq.status = 0 THEN '待审核'
                 WHEN sq.status = 1 THEN '已通过'
                 WHEN sq.status = 2 THEN '已拒绝'
                 ELSE '未知状态'
-                END AS statusText
+                END AS status_text
         FROM
             selectionapplication sq
                 LEFT JOIN
@@ -64,14 +64,14 @@
         SELECT
             sq.*,
             u.name AS username,
-            k.coursename AS courseName,
-            r.username AS reviewerName,
+            k.coursename AS course_name,
+            r.username AS reviewer_name,
             CASE
                 WHEN sq.status = 0 THEN '待审核'
                 WHEN sq.status = 1 THEN '已通过'
                 WHEN sq.status = 2 THEN '已拒绝'
                 ELSE '未知状态'
-                END AS statusText
+                END AS status_text
         FROM
             selectionapplication sq
                 LEFT JOIN
